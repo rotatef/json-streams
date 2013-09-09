@@ -5,14 +5,14 @@
     (run-test file)))
 
 (defun read-raw-tokens (in)
-  (let ((jstream (make-instance 'json-input-stream :stream in)))
+  (let ((jstream (make-json-input-stream in)))
     (loop repeat 1000
           for token = (multiple-value-list (read-raw-token jstream))
           collect (car token)
           until (member (car token) '(:eof :error)))))
 
 (defun read-tokens (in)
-  (let ((jstream (make-instance 'json-input-stream :stream in)))
+  (let ((jstream (make-json-input-stream in)))
     (loop repeat 1000
           for token = (handler-case (multiple-value-list (json-read jstream))
                         (error () (list :error)))

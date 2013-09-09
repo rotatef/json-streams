@@ -1,2 +1,4 @@
 (defpackage #:json-streams
-  (:use :common-lisp))
+  (:use :common-lisp)
+  (:export
+   #:make-output-json-stream))

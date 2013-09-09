@@ -5,11 +5,20 @@
 
 (defclass json-input-stream ()
   ((stream :initarg :stream)
+   (manyp :initarg :manyp)
+   (max-exponent :initarg :max-exponent)
    (current-char :initform nil)
    (position :initform 0)
    (newlines :initform '())
    (string-mode :initform nil)
    (state-stack :initform '(:before-json-text))))
+
+
+(defun make-json-input-stream (stream &key manyp (max-exponent 308))
+  (make-instance 'json-input-stream
+                 :stream stream
+                 :manyp manyp
+                 :max-exponent max-exponent))
 
 
 (defun current-position ()
@@ -144,7 +153,7 @@
       (errorp
        (values :error start (current-position)
                errorp (current-char)))
-      ((> exponent 308)
+      ((> exponent (slot-value *json-input-stream* 'max-exponent))
        (values :error start (current-position)
                :exponent-to-large exponent))
       (t (values (* sign
@@ -232,8 +241,7 @@
 
 
 (defun read-token (&optional start (*json-input-stream* *json-input-stream*))
-  (with-slots (state-stack stream) *json-input-stream*
-    ;(format t "~&States ~S~&" state-stack)
+  (with-slots (state-stack manyp stream) *json-input-stream*
     (multiple-value-bind (token start2 end)
         (read-raw-token)
       (unless start
@@ -242,8 +250,9 @@
           ((process-token ()
              (ecase (car state-stack)
                (:before-json-text
-                (pop state-stack)
-                (push :after-json-text state-stack)
+                (unless manyp
+                  (pop state-stack)
+                  (push :after-json-text state-stack))
                 (ecase token
                   (:begin-object
                    (push :begin-object state-stack)
