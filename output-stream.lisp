@@ -25,7 +25,7 @@
       (if (and (zerop remainder)
                (< (abs number) (expt 2 53)))
           (princ quotient stream)
-          (write-float (coerce number 'double-float) stream)))))
+          (write-float number stream)))))
 
 (defun write-unicode (stream code-point)
   (flet ((write-escape (value)

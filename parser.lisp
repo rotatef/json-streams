@@ -51,3 +51,7 @@
 (defun write-json (value target)
   (let ((jstream (make-instance 'json-output-stream :stream target)))
     (write-json* value jstream)))
+
+(defun json-stringify (value)
+  (with-output-to-string (out)
+    (write-json value out)))

@@ -17,17 +17,6 @@
             (scale (* f 2) (* (expt b (- e)) 2) 1 1 0 BB roundp roundp v)
             (scale (* f b 2) (* (expt b (- 1 e)) 2) b 1 0 BB roundp roundp v)))))
 
-#|
-(defun scale (r s m+ m- k BB low-ok-p high-ok-p)
-  (cond
-    ((funcall (if high-ok-p #'>= #'>) (+ r m+) s) ; k is too low
-     (scale r (* s BB) m+ m- (+ k 1) BB low-ok-p high-ok-p))
-    ((funcall (if high-ok-p #'< #'<=) (* (+ r m+)) BB s) ; k is too high
-     (scale (* r BB) s (* m+ BB) (* m- BB) (- k 1) BB low-ok-p high-ok-p))
-    (t ; k is correct
-     (cons k (generate r s m+ m- BB low-ok-p high-ok-p)))))
-|#
-
 (defun generate (r s m+ m- BB low-ok-p high-ok-p)
   (multiple-value-bind (d r)
       (truncate (* r BB) s)
@@ -75,10 +64,25 @@
         (* (log x) (svref table BB))
         (/ (log x) (log BB)))))
 
-(defun write-float (float stream)
-  (multiple-value-bind (f e s)
-      (integer-decode-float float)
-    (let ((digits (flonum->digits (abs float) f e -1022 53 2 10)))
-      (when (minusp s)
-        (princ "-" stream))
-      (format stream "0.~{~D~}E~D" (rest digits) (first digits)))))
+;; Constants for 64 bit double precision floats
+(defconstant +min-e+ -1022)
+(defconstant +precision+ 53)
+(defconstant +internal-base+ 2)
+(defconstant +output-base+ 10)
+
+(defun write-float (real stream)
+  (let ((float (etypecase real
+                 (float real)
+                 (real (coerce real 'double-float)))))
+    (multiple-value-bind (f e s)
+        (integer-decode-float float)
+      (destructuring-bind (exp &rest digits)
+          (flonum->digits (abs float) f e +min-e+ +precision+ +internal-base+ +output-base+)
+        (when (minusp s)
+          (princ "-" stream))
+        (if (and (< (length digits) 16)
+                 (<= -3 exp 6))
+            (if (plusp exp)
+                (format stream "~{~D~}.~{~D~}" (subseq digits 0 exp) (subseq digits exp))
+                (format stream "0.~v@{0~}~{~D~}" exp digits))
+            (format stream "0.~{~D~}E~D" digits exp))))))
