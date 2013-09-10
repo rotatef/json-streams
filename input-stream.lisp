@@ -2,6 +2,19 @@
 
 (defvar *json-input-stream*)
 
+(define-condition json-parse-error (error)
+  ((stream :initform *json-input-stream* :initarg :stream :reader json-parser-error-stream)
+   (message :initarg :message :reader json-parser-error-message))
+  (:report (lambda (c stream)
+             (format stream "~A at ~S"
+                     (json-parser-error-message c)
+                     (slot-value (json-parser-error-stream c)
+                                 'position)))))
+
+
+(defun json-parse-error (message &rest args)
+  (error 'json-parse-error :message (apply #'format nil message args)))
+
 
 (defclass json-input-stream ()
   ((stream :initarg :stream)
@@ -64,8 +77,7 @@
         unless (eql (read-next-char) expect)
         do (setf token :error))
   (if (eql :error token)
-      (values token start (current-position)
-              :unexpected-character (current-char))
+      (error 'json-parse-error :message (format nil "Expected ~S" string))
       (values token start (current-position))))
 
 
@@ -89,7 +101,7 @@
         for char = (read-next-char)
         for digit = (and char (digit-char-p char 16))
         do (unless digit
-             (return :invalid-unicode-escape))
+             (json-parse-error "Invalid char ~S in Unicode escape" char))
         sum (* digit weight)))
 
 
@@ -97,15 +109,8 @@
   (read-next-char)
   (let ((escaped (read-next-char)))
     (if (eql #\u escaped)
-        (let ((code-point (read-4hexdig)))
-          (values (if (integerp code-point)
-                      code-point
-                      :error)
-                  start (current-position)))
-        (values (if (find escaped "\"\\/bfnrt")
-                    escaped
-                    :error)
-                start (current-position)))))
+        (values (read-4hexdig) start (current-position))
+        (values escaped start (current-position)))))
 
 
 (defun read-integer (&key fractional-p)
@@ -116,7 +121,7 @@
 	while digit
 	finally (progn (unread-current-char)
 		       (unless (plusp size)
-			 (throw 'error :expected-digit))
+			 (json-parse-error "Expected digit, got ~S" char))
 		       (return (if fractional-p
 				   (/ number (expt 10 size))
 				   number)))))
@@ -127,39 +132,32 @@
 	 (integer-part 0)
 	 (fraction-part 0)
 	 (exponent-sign 1)
-	 (exponent 0)
-	 (errorp
-	  (catch 'error
-	     (when (eql #\- (peek-next-char))
-	       (read-next-char)
-	       (setf sign -1))
-	     (if (eql #\0 (peek-next-char))
-		 (read-next-char)
-		 (setf integer-part (read-integer)))
-	     (when (eql #\. (peek-next-char))
-	       (read-next-char)
-	       (setf fraction-part (read-integer :fractional-p t)))
-	     (when (member (peek-next-char) '(#\e #\E))
-	       (read-next-char)
-	       (case (read-next-char)
-		 (#\+)
-		 (#\-
-		  (setf exponent-sign -1))
-		 (otherwise
-		  (unread-current-char)))
-	       (setf exponent (read-integer)))
-             nil)))
-    (cond
-      (errorp
-       (values :error start (current-position)
-               errorp (current-char)))
-      ((> exponent (slot-value *json-input-stream* 'max-exponent))
-       (values :error start (current-position)
-               :exponent-to-large exponent))
-      (t (values (* sign
-                    (+ integer-part fraction-part)
-                    (expt 10 (* exponent-sign exponent)))
-                 start (current-position))))))
+	 (exponent 0))
+    (when (eql #\- (peek-next-char))
+      (read-next-char)
+      (setf sign -1))
+    (if (eql #\0 (peek-next-char))
+        (read-next-char)
+        (setf integer-part (read-integer)))
+    (when (eql #\. (peek-next-char))
+      (read-next-char)
+      (setf fraction-part (read-integer :fractional-p t)))
+    (when (member (peek-next-char) '(#\e #\E))
+      (read-next-char)
+      (case (read-next-char)
+        (#\+)
+        (#\-
+         (setf exponent-sign -1))
+        (otherwise
+         (unread-current-char)))
+      (setf exponent (read-integer)))
+    (with-slots (max-exponent) *json-input-stream*
+      (when (> exponent max-exponent)
+        (json-parse-error "Exponent ~A is too large (max-exponent is ~A)" exponent max-exponent)))
+    (values (* sign
+               (+ integer-part fraction-part)
+               (expt 10 (* exponent-sign exponent)))
+            start (current-position))))
 
 
 (defun read-raw-token (&optional (*json-input-stream* *json-input-stream*))
@@ -213,22 +211,23 @@
           ((stringp token)
            (princ token string))
           ((characterp token)
-           (ecase token
+           (case token
              ((#\" #\\ #\/) (princ token string))
              (#\b (princ #\Backspace string))
              (#\f (princ #\Page string))
              (#\n (princ #\Newline string))
              (#\r (princ #\Return string))
-             (#\t (princ #\Tab string))))
+             (#\t (princ #\Tab string))
+             (otherwise (json-parse-error "Invalid escape \\~A" token))))
           ((integerp token)
            (cond
              ((<= #xDC00 token #xDFFF)
-              (error "Invalid unicode escape ~4,'0X" token))
+              (json-parse-error "Invalid unicode escape ~4,'0X" token))
              ((<= #xD800 token #xDBFF)
               (let ((lead token)
                     (tail (read-raw-token)))
-                (assert (and (integerp tail) (<= #xDC00 tail #xDFFF)) ()
-                        "Invalid surrogate pair ~4,'0X ~4,'0X" lead tail)
+                (unless (and (integerp tail) (<= #xDC00 tail #xDFFF))
+                  (json-parse-error "Invalid surrogate pair ~4,'0X ~4,'0X" lead tail))
                 (princ (code-char (+ #x10000
                                      (ash (- lead #xD800) 10)
                                      (- tail #xDC00)))
@@ -236,9 +235,29 @@
              (t
               (princ (code-char token) string))))
           (t
-           (error "Invalid token ~S in string." token)))))
+           (json-parse-error "Invalid token ~S in string." token)))))
      start end)))
 
+(defmacro def-state-machine (&body state-cases)
+  `(let ((token-type (etypecase token
+                       (keyword token)
+                       (null nil)
+                       (real :number)
+                       (string :string))))
+    (labels ((reprocess ()
+               (ecase (car state-stack)
+                 ,@state-cases)))
+      (reprocess))))
+
+(defmacro tokentypecase (&body cases)
+  `(case token-type
+     ,@cases
+     ,@(unless (assoc 'otherwise cases)
+               `((otherwise (error 'json-parse-error
+                                   :stream *json-input-stream*
+                                   :message (format nil "Expected one of ~S in state ~S"
+                                                    ',(mapcar #'car cases)
+                                                    (car (slot-value *json-input-stream* 'state-stack)))))))))
 
 (defun read-token (&optional start (*json-input-stream* *json-input-stream*))
   (with-slots (state-stack manyp stream) *json-input-stream*
@@ -246,93 +265,89 @@
         (read-raw-token)
       (unless start
         (setf start start2))
-      (labels
-          ((process-token ()
-             (ecase (car state-stack)
-               (:before-json-text
-                (unless manyp
-                  (pop state-stack)
-                  (push :after-json-text state-stack))
-                (ecase token
-                  (:begin-object
-                   (push :begin-object state-stack)
-                   (values token start end))
-                  (:begin-array
-                   (push :before-first-array-item state-stack)
-                   (values token start end))))
+      (def-state-machine
+          (:before-json-text
+           (unless manyp
+             (pop state-stack)
+             (push :after-json-text state-stack))
+           (tokentypecase
+             (:begin-object
+              (push :begin-object state-stack)
+              (values token start end))
+             (:begin-array
+              (push :before-first-array-item state-stack)
+              (values token start end))))
 
-               (:begin-object
-                (ecase token
-                  (:end-object
-                   (pop state-stack)
-                   (values token start end))
-                  (:quote
-                   (setf (car state-stack) :after-object-key)
-                   (parse-string start))))
+          (:begin-object
+           (tokentypecase
+             (:end-object
+              (pop state-stack)
+              (values token start end))
+             (:quote
+              (setf (car state-stack) :after-object-key)
+              (parse-string start))))
 
-               (:after-object-key
-                (ecase token
-                  (:name-separator
-                   (setf (car state-stack) :after-object-value)
-                   (push :value state-stack)
-                   (read-token start))))
+          (:after-object-key
+           (tokentypecase
+             (:name-separator
+              (setf (car state-stack) :after-object-value)
+              (push :value state-stack)
+              (read-token start))))
 
-               (:after-object-value
-                (ecase token
-                  (:value-separator
-                   (setf (car state-stack) :before-object-key)
-                   (read-token start))
-                  (:end-object
-                   (pop state-stack)
-                   (values token start end))))
+          (:after-object-value
+           (tokentypecase
+             (:value-separator
+              (setf (car state-stack) :before-object-key)
+              (read-token start))
+             (:end-object
+              (pop state-stack)
+              (values token start end))))
 
-               (:before-object-key
-                (ecase token
-                  (:quote
-                   (setf (car state-stack) :after-object-key)
-                   (parse-string start))))
+          (:before-object-key
+           (tokentypecase
+             (:quote
+              (setf (car state-stack) :after-object-key)
+              (parse-string start))))
 
-               (:before-first-array-item
-                (case token
-                  (:end-array
-                   (pop state-stack)
-                   (values token start end))
-                  (otherwise
-                   (setf (car state-stack) :after-array-item)
-                   (push :value state-stack)
-                   (process-token))))
+          (:before-first-array-item
+           (tokentypecase
+             (:end-array
+              (pop state-stack)
+              (values token start end))
+             (otherwise
+              (setf (car state-stack) :after-array-item)
+              (push :value state-stack)
+              (reprocess))))
 
-               (:after-array-item
-                (ecase token
-                  (:value-separator
-                   (push :value state-stack)
-                   (read-token start))
-                  (:end-array
-                   (pop state-stack)
-                   (values token start end))))
+          (:after-array-item
+           (tokentypecase
+             (:value-separator
+              (push :value state-stack)
+              (read-token start))
+             (:end-array
+              (pop state-stack)
+              (values token start end))))
 
-               (:value
-                (pop state-stack)
-                (case token
-                  (:begin-object
-                   (push :begin-object state-stack)
-                   (values token start end))
-                  (:begin-array
-                   (push :before-first-array-item state-stack)
-                   (values token start end))
-                  (:quote
-                   (parse-string start))
-                  ((:false :null :true)
-                   (values token start end))
-                  (otherwise
-                   (assert (numberp token) () "Expeted number, got ~S" token)
-                   (values token start end))))
+          (:value
+           (pop state-stack)
+           (tokentypecase
+             (:begin-object
+              (push :begin-object state-stack)
+              (values token start end))
+             (:begin-array
+              (push :before-first-array-item state-stack)
+              (values token start end))
+             (:quote
+              (parse-string start))
+             ((:false :null :true)
+              (values token start end))
+             (:number
+              (values token start end))))
 
-               (:after-json-text
-                (assert (eql :eof token) () "Extra data after JSON-text ~S" token)
-                (values :eof start end)))))
-
-        (process-token)))))
+          (:after-json-text
+           (tokentypecase
+             (:eof
+              (values :eof start end))))))))
 
 
 (defun json-read (json-input-stream)

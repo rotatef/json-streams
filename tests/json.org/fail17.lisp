@@ -1,7 +1,11 @@
 (:begin-array
  :quote
  "Illegal backslash escape: "
- :error)
+ #\0
+ "17"
+ :quote
+ :end-array
+ :eof)
 
 (:begin-array
  :error)

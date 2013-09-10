@@ -1,7 +1,17 @@
 (:begin-array
  :quote
  "tab"
- :error)
+ #\Space
+ "  character"
+ #\Space
+ "  in"
+ #\Space
+ " string"
+ #\Space
+ " "
+ :quote
+ :end-array
+ :eof)
 
 (:begin-array
  :error)

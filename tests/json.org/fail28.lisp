@@ -1,7 +1,11 @@
 (:begin-array
  :quote
  "line"
- :error)
+ #\Newline
+ "break"
+ :quote
+ :end-array
+ :eof)
 
 (:begin-array
  :error)
