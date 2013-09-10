@@ -74,11 +74,10 @@
 
 (defun expect-string (start string token)
   (loop for expect across string
-        unless (eql (read-next-char) expect)
-        do (setf token :error))
-  (if (eql :error token)
-      (error 'json-parse-error :message (format nil "Expected ~S" string))
-      (values token start (current-position))))
+        for char = (read-next-char)
+        unless (eql char expect)
+        do (json-parse-error "Expected ~S (as part of ~S), got ~S" expect string char))
+  (values token start (current-position)))
 
 
 (defun valid-unescaped-char-p (char)
@@ -172,10 +171,9 @@
                 (values :string-delimiter start-pos (current-position)))
            (#\\ (read-escaped start-pos))
            (otherwise
-            (if (valid-unescaped-char-p (peek-next-char))
-                (values (read-string-chars) start-pos (current-position))
-                (values :error start-pos (current-position)
-                        :invalid-char-in-string (read-next-char))))))
+            (unless (valid-unescaped-char-p (peek-next-char))
+              (json-parse-error "Invalid char in string: ~S " (read-next-char)))
+            (values (read-string-chars) start-pos (current-position)))))
         (t
          (skip-space)
          (case (peek-next-char)
@@ -194,8 +192,7 @@
            (#\" (read-next-char)
                 (setf string-mode t)
                 (values :string-delimiter start-pos (current-position)))
-           (otherwise (values :error start-pos (current-position)
-                              :unexpected-char (read-next-char)))))))))
+           (otherwise (json-parse-error "Unexpected character ~S" (read-next-char)))))))))
 
 
 (defun parse-string (start)
@@ -253,11 +250,9 @@
   `(case token-type
      ,@cases
      ,@(unless (assoc 'otherwise cases)
-               `((otherwise (error 'json-parse-error
-                                   :stream *json-input-stream*
-                                   :message (format nil "Expected one of ~S in state ~S"
-                                                    ',(mapcar #'car cases)
-                                                    (car (slot-value *json-input-stream* 'state-stack)))))))))
+               `((otherwise (json-parse-error "Expected one of ~S in state ~S"
+                                              ',(mapcar #'car cases)
+                                              (car state-stack)))))))
 
 (defun read-token (&optional start (*json-input-stream* *json-input-stream*))
   (with-slots (state-stack manyp stream) *json-input-stream*
