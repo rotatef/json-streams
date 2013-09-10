@@ -6,10 +6,18 @@
 
 (defclass json-output-stream ()
   ((stream :initarg :stream)
+   (manyp :initarg :manyp)
    (only-ascii :initform t)
    (indent :initform nil :initarg :indent)
    (level :initform 0)
    (state-stack :initform '(:before-json-text))))
+
+
+(defun make-json-output-stream (stream &key manyp)
+  (make-instance 'json-output-stream
+                 :stream stream
+                 :manyp manyp))
+
 
 (defun write-indent ()
   (with-slots (stream indent level) *json-output-stream*

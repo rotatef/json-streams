@@ -152,7 +152,7 @@
       (setf exponent (read-integer)))
     (with-slots (max-exponent) *json-input-stream*
       (when (> exponent max-exponent)
-        (json-parse-error "Exponent ~A is too large (max-exponent is ~A)" exponent max-exponent)))
+        (json-parse-error "Exponent ~A is too large (or small) (max-exponent is ~A)" exponent max-exponent)))
     (values (* sign
                (+ integer-part fraction-part)
                (expt 10 (* exponent-sign exponent)))

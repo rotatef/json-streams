@@ -1,0 +1,28 @@
+(in-package #:json-streams)
+
+
+(defun json-parse (source &rest options)
+  (labels ((parse-array (jstream)
+             (coerce (loop for value = (parse-value jstream)
+                           until (eql :end-array value)
+                           collect value)
+                     'vector))
+           (parse-object (jstream)
+             (let ((object (make-hash-table :test #'equal)))
+               (loop for key = (parse-value jstream)
+                     until (eql :end-object key)
+                     do (setf (gethash key object) (parse-value jstream)))
+               object))
+           (parse-value (jstream)
+             (let ((token (json-read jstream)))
+               (case token
+                 (:true t)
+                 (:false nil)
+                 (:begin-array (parse-array jstream))
+                 (:begin-object (parse-object jstream))
+                 (otherwise token)))))
+    (parse-value (apply #'make-json-input-stream
+                        (if (stringp source)
+                            (make-string-input-stream source)
+                            source)
+                        options))))

@@ -7,5 +7,6 @@
                (:file "write-float")
                (:file "output-stream")
 	       (:file "input-stream")
-               (:file "parser")
+               (:file "parse")
+               (:file "stringify")
                (:file "tests")))
