@@ -1,7 +1,7 @@
 (:begin-array
- :quote
+ :string-delimiter
  "Extra close"
- :quote
+ :string-delimiter
  :end-array
  :end-array
  :eof)

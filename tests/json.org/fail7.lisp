@@ -1,7 +1,7 @@
 (:begin-array
- :quote
+ :string-delimiter
  "Comma after the close"
- :quote
+ :string-delimiter
  :end-array
  :value-separator
  :eof)

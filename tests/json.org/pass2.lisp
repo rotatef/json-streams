@@ -17,9 +17,9 @@
  :begin-array
  :begin-array
  :begin-array
- :quote
+ :string-delimiter
  "Not too deep"
- :quote
+ :string-delimiter
  :end-array
  :end-array
  :end-array

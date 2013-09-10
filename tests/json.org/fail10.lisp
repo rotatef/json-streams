@@ -1,13 +1,13 @@
 (:begin-object
- :quote
+ :string-delimiter
  "Extra value after close"
- :quote
+ :string-delimiter
  :name-separator
  :true
  :end-object
- :quote
+ :string-delimiter
  "misplaced quoted value"
- :quote
+ :string-delimiter
  :eof)
 
 (:begin-object

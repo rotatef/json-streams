@@ -1,7 +1,7 @@
 (:begin-object
- :quote
+ :string-delimiter
  "Illegal invocation"
- :quote
+ :string-delimiter
  :name-separator
  :error
  )

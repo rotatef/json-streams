@@ -1,5 +1,5 @@
 (:begin-array
- :quote
+ :string-delimiter
  "line"
  :error)
 

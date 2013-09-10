@@ -1,7 +1,7 @@
 (:begin-object
- :quote
+ :string-delimiter
  "Numbers cannot be hex"
- :quote
+ :string-delimiter
  :name-separator
  0
  :error)

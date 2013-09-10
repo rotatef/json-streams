@@ -1,7 +1,7 @@
 (:begin-object
- :quote
+ :string-delimiter
  "Comma instead of colon"
- :quote
+ :string-delimiter
  :value-separator
  :null
  :end-object

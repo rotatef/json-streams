@@ -1,7 +1,7 @@
 (:begin-array
- :quote
+ :string-delimiter
  "mismatch"
- :quote
+ :string-delimiter
  :end-object
  :eof)
 

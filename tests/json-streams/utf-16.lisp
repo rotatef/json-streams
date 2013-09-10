@@ -1,8 +1,8 @@
 (:begin-array
- :quote
+ :string-delimiter
  #xd834
  #xdd1e
- :quote
+ :string-delimiter
  :end-array
  :eof)
 

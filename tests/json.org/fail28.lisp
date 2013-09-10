@@ -1,9 +1,9 @@
 (:begin-array
- :quote
+ :string-delimiter
  "line"
  #\Newline
  "break"
- :quote
+ :string-delimiter
  :end-array
  :eof)
 

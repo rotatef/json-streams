@@ -1,7 +1,7 @@
 (:begin-object
- :quote
+ :string-delimiter
  "Comma instead if closing brace"
- :quote
+ :string-delimiter
  :name-separator
  :true
  :value-separator

@@ -1,9 +1,9 @@
 (:begin-array
- :quote
+ :string-delimiter
  "Illegal backslash escape: "
  #\x
   "15"
- :quote
+ :string-delimiter
  :end-array
  :eof)
 

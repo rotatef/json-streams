@@ -1,11 +1,11 @@
 (:begin-object
- :quote
+ :string-delimiter
  "Illegal expression"
- :quote
+ :string-delimiter
  :name-separator
  1
  :error)
- 
+
 (:begin-object
  "Illegal expression" 1
  :error)

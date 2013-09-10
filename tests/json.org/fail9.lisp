@@ -1,7 +1,7 @@
 (:begin-object
- :quote
+ :string-delimiter
  "Extra comma"
- :quote
+ :string-delimiter
  :name-separator
  :true
  :value-separator

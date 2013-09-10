@@ -1,7 +1,7 @@
 (:begin-array
- :quote
+ :string-delimiter
  "Bad value"
- :quote
+ :string-delimiter
  :value-separator
  :error)
 

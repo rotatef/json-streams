@@ -1,5 +1,5 @@
 (:begin-array
- :quote
+ :string-delimiter
  "tab"
  #\Space
  "  character"
@@ -9,7 +9,7 @@
  " string"
  #\Space
  " "
- :quote
+ :string-delimiter
  :end-array
  :eof)
 

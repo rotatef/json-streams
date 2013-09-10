@@ -169,7 +169,7 @@
            ((nil) (values :eof start-pos (current-position)))
            (#\" (read-next-char)
                 (setf string-mode nil)
-                (values :quote start-pos (current-position)))
+                (values :string-delimiter start-pos (current-position)))
            (#\\ (read-escaped start-pos))
            (otherwise
             (if (valid-unescaped-char-p (peek-next-char))
@@ -193,7 +193,7 @@
             (read-number start-pos))
            (#\" (read-next-char)
                 (setf string-mode t)
-                (values :quote start-pos (current-position)))
+                (values :string-delimiter start-pos (current-position)))
            (otherwise (values :error start-pos (current-position)
                               :unexpected-char (read-next-char)))))))))
 
@@ -206,7 +206,7 @@
         (multiple-value-setq (token start2 end)
           (read-raw-token))
         (cond
-          ((eql :quote token)
+          ((eql :string-delimiter token)
            (return))
           ((stringp token)
            (princ token string))
@@ -283,7 +283,7 @@
              (:end-object
               (pop state-stack)
               (values token start end))
-             (:quote
+             (:string-delimiter
               (setf (car state-stack) :after-object-key)
               (parse-string start))))
 
@@ -305,7 +305,7 @@
 
           (:before-object-key
            (tokentypecase
-             (:quote
+             (:string-delimiter
               (setf (car state-stack) :after-object-key)
               (parse-string start))))
 
@@ -337,7 +337,7 @@
              (:begin-array
               (push :before-first-array-item state-stack)
               (values token start end))
-             (:quote
+             (:string-delimiter
               (parse-string start))
              ((:false :null :true)
               (values token start end))

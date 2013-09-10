@@ -1,7 +1,7 @@
 (:begin-object
- :quote
+ :string-delimiter
  "Double colon"
- :quote
+ :string-delimiter
  :name-separator
  :name-separator
  :null

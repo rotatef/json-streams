@@ -1,7 +1,7 @@
 (:begin-object
- :quote
+ :string-delimiter
  "Missing colon"
- :quote
+ :string-delimiter
  :null
  :end-object
  :eof)

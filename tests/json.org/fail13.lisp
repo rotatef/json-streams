@@ -1,7 +1,7 @@
 (:begin-object
- :quote
+ :string-delimiter
  "Numbers cannot have leading zeroes"
- :quote
+ :string-delimiter
  :name-separator
  0
  13

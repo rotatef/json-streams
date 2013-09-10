@@ -1,24 +1,24 @@
 (:begin-object
- :quote
+ :string-delimiter
  "JSON Test Pattern pass3"
- :quote
+ :string-delimiter
  :name-separator
  :begin-object
- :quote
+ :string-delimiter
  "The outermost value"
- :quote
+ :string-delimiter
  :name-separator
- :quote
+ :string-delimiter
  "must be an object or array."
- :quote
+ :string-delimiter
  :value-separator
- :quote
+ :string-delimiter
  "In this test"
- :quote
+ :string-delimiter
  :name-separator
- :quote
+ :string-delimiter
  "It is an object."
- :quote
+ :string-delimiter
  :end-object
  :end-object
  :eof)

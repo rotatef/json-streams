@@ -1,7 +1,7 @@
 (:begin-array
- :quote
+ :string-delimiter
  "double extra comma"
- :quote
+ :string-delimiter
  :value-separator
  :value-separator
  :end-array

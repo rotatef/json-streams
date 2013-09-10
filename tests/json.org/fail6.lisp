@@ -1,8 +1,8 @@
 (:begin-array
  :value-separator
- :quote
+ :string-delimiter
  "<-- missing value"
- :quote
+ :string-delimiter
  :end-array
  :eof)
 

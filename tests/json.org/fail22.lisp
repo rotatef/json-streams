@@ -1,7 +1,7 @@
 (:begin-array
- :quote
+ :string-delimiter
  "Colon instead of comma"
- :quote
+ :string-delimiter
  :name-separator
  :false
  :end-array
