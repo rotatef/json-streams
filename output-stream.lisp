@@ -64,7 +64,7 @@
                  (princ char stream)))))
     (princ #\" stream)))
 
-(defun json-write (token &optional (*json-output-stream* *json-output-stream*))
+(defun json-write (token *json-output-stream*)
   (with-slots (state-stack stream indent level) *json-output-stream*
     (let ((token-type (etypecase token
                         (keyword token)

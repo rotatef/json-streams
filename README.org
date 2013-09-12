@@ -1,0 +1,103 @@
+* json-streams
+
+A Common Lisp library for reading and writing JSON.
+
+- No dependencies.
+- Unambiguous mapping of datatypes between lisp and JSON.
+- Easy to use streaming API.
+- Validates input and output.
+- Designed to be a building block for more high level libraries.
+- Streaming design, can proccess JSON text of unlimted size.
+
+There is already many JSON libraries for Common Lisp.  None of these
+libraries can be said to be best, they all have their strengths and
+weaknesses.  Much of the problem lies in the fact that there is a bit
+of disparaty between JSON datatypes and Common Lisp datatypes.  This
+library is therefore designed to used as a building block for more
+high level JSON libraries.  The library takes of boring syntactic
+details and error checking.
+
+
+** High level interface
+
+The high level interface uses the following datatype mapping:
+
+| JSON   | Common Lisp                            |
+|--------+----------------------------------------|
+| true   | T                                      |
+| false  | NIL                                    |
+| null   | :NULL                                  |
+| string | string                                 |
+| number | integer, ratio and float (output only) |
+| array  | vector                                 |
+| object | hash-table with keys as strings        |
+
+Function
+JSON-STREAMS:JSON-PARSE source &key manyp max-exponent
+
+Parses JSON text from source, either a character stream or a string.
+
+Function
+JSON-STREAMS:JSON-STRINGIFY value &optional target &rest options
+
+Stringifies value into JSON text. If target is not provided or NIL,
+returns a string with the JSON text. Otherwise target must be a
+character stream.
+
+
+** The streaming interface
+
+The high level interface is built on top the streaming interafce.  See
+parse.lisp and stringify.lisp for example of how to use this
+interface.
+
+Function
+JSON-STREAMS:MAKE-JSON-INPUT-STREAM stream &key manyp max-exponent
+
+Creates a JSON input stream like object.
+
+- manyp - Default NIL. When NIL only a single JSON text (object or
+  array) is expected in the stream. When T, any number of JSON texts
+  can be read from stream.
+- max-exponent - Default 308. The maximum (positive and negative)
+  exponent accepted in numbers.
+
+Function
+JSON-STREAMS:JSON-READ json-input-stream
+
+Parses JSON text from the underlying stream and returns the next
+token.
+
+Function
+JSON-STREAMS:MAKE-JSON-OUTPUT-STREAM stream &key manyp
+
+Creates a JSON output stream.
+
+Function
+JSON-STREAMS:JSON-WRITE token json-output-stream
+
+Outputs JSON text to underlying stream based on the given token.
+
+The possible tokens for input and output are
+
+- :BEGIN-OBJECT
+- :END-OBJECT
+- :BEGIN-ARRAY
+- :END-ARRAY
+- :NULL
+- :FALSE
+- :TRUE
+- A number
+- A string
+- :EOF
+
+After a :BEGIN-OBJECT is returned, JSON-READ will alternate between
+returning keys and values of the object, until :END-OBJECT is returned
+instead of a key.  Keys are always returned as strings.  Values can be
+anything, except :END-OBJECT, :END-ARRAY and :EOF.  Thus some kind of
+recursive or stack based algorithm is neccearry.
+
+Duplicate keys in objects are not detected.
+
+Numbers are returned as integers or ratios. For output floats are also
+accepted.
