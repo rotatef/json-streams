@@ -221,24 +221,6 @@
            (json-error "Invalid token ~S in string." token)))))
      start end)))
 
-(defmacro def-state-machine (&body state-cases)
-  `(let ((token-type (etypecase token
-                       (keyword token)
-                       (null nil)
-                       (real :number)
-                       (string :string))))
-     (labels ((reprocess ()
-                (ecase (car (state-stack))
-                  ,@state-cases)))
-      (reprocess))))
-
-(defmacro tokentypecase (&body cases)
-  `(case token-type
-     ,@cases
-     ,@(unless (assoc 'otherwise cases)
-               `((otherwise (json-error "Expected one of ~S in state ~S"
-                                              ',(mapcar #'car cases)
-                                              (car (state-stack))))))))
 
 (defun read-token (&optional start (*json-stream* *json-stream*))
   (with-slots (manyp stream) *json-stream*
@@ -246,89 +228,95 @@
         (read-raw-token)
       (unless start
         (setf start start2))
-      (def-state-machine
-          (:before-json-text
-           (unless manyp
-             (switch-state :after-json-text))
-           (tokentypecase
-             (:begin-object
-              (push-state :begin-object)
-              (values token start end))
-             (:begin-array
-              (push-state :before-first-array-item)
-              (values token start end))))
+      (let ((token-type (etypecase token
+                       (keyword token)
+                       (null nil)
+                       (real :number)
+                       (string :string))))
+        (labels ((reprocess ()
+                (ecase (car (state-stack))
+                  (:before-json-text
+                   (unless manyp
+                     (switch-state :after-json-text))
+                   (ecase* token-type
+                     (:begin-object
+                      (push-state :begin-object)
+                      (values token start end))
+                     (:begin-array
+                      (push-state :before-first-array-item)
+                      (values token start end))))
 
-          (:begin-object
-           (tokentypecase
-             (:end-object
-              (pop-state)
-              (values token start end))
-             (:string-delimiter
-              (switch-state :after-object-key)
-              (parse-string start))))
+                  (:begin-object
+                   (ecase* token-type
+                     (:end-object
+                      (pop-state)
+                      (values token start end))
+                     (:string-delimiter
+                      (switch-state :after-object-key)
+                      (parse-string start))))
 
-          (:after-object-key
-           (tokentypecase
-             (:name-separator
-              (switch-state :after-object-value)
-              (push-state :value)
-              (read-token start))))
+                  (:after-object-key
+                   (ecase* token-type
+                     (:name-separator
+                      (switch-state :after-object-value)
+                      (push-state :value)
+                      (read-token start))))
 
-          (:after-object-value
-           (tokentypecase
-             (:value-separator
-              (switch-state :before-object-key)
-              (read-token start))
-             (:end-object
-              (pop-state)
-              (values token start end))))
+                  (:after-object-value
+                   (ecase* token-type
+                     (:value-separator
+                      (switch-state :before-object-key)
+                      (read-token start))
+                     (:end-object
+                      (pop-state)
+                      (values token start end))))
 
-          (:before-object-key
-           (tokentypecase
-             (:string-delimiter
-              (switch-state :after-object-key)
-              (parse-string start))))
+                  (:before-object-key
+                   (ecase* token-type
+                     (:string-delimiter
+                      (switch-state :after-object-key)
+                      (parse-string start))))
 
-          (:before-first-array-item
-           (tokentypecase
-             (:end-array
-              (pop-state)
-              (values token start end))
-             (otherwise
-              (switch-state :after-array-item)
-              (push-state :value)
-              (reprocess))))
+                  (:before-first-array-item
+                   (case token-type
+                     (:end-array
+                      (pop-state)
+                      (values token start end))
+                     (otherwise
+                      (switch-state :after-array-item)
+                      (push-state :value)
+                      (reprocess))))
 
-          (:after-array-item
-           (tokentypecase
-             (:value-separator
-              (push-state :value)
-              (read-token start))
-             (:end-array
-              (pop-state)
-              (values token start end))))
+                  (:after-array-item
+                   (ecase* token-type
+                     (:value-separator
+                      (push-state :value)
+                      (read-token start))
+                     (:end-array
+                      (pop-state)
+                      (values token start end))))
 
-          (:value
-           (pop-state)
-           (tokentypecase
-             (:begin-object
-              (push-state :begin-object)
-              (values token start end))
-             (:begin-array
-              (push-state :before-first-array-item)
-              (values token start end))
-             (:string-delimiter
-              (parse-string start))
-             ((:false :null :true)
-              (values token start end))
-             (:number
-              (values token start end))))
+                  (:value
+                   (pop-state)
+                   (ecase* token-type
+                     (:begin-object
+                      (push-state :begin-object)
+                      (values token start end))
+                     (:begin-array
+                      (push-state :before-first-array-item)
+                      (values token start end))
+                     (:string-delimiter
+                      (parse-string start))
+                     ((:false :null :true)
+                      (values token start end))
+                     (:number
+                      (values token start end))))
 
-          (:after-json-text
-           (tokentypecase
-             (:eof
-              (values :eof start end))))))))
+                  (:after-json-text
+                   (ecase* token-type
+                     (:eof
+                      (values :eof start end)))))))))))
 
 
-(defun json-read (json-input-stream)
-  (read-token nil json-input-stream))
+  (defun json-read (json-input-stream)
+    (read-token nil json-input-stream)))

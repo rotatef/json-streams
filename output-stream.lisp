@@ -67,18 +67,11 @@
                         (real :number)
                         (string :string))))
       (labels
-          ((push-state (new-state)
-             (push new-state state-stack))
-           (pop-state ()
-             (pop state-stack))
-           (switch-state (new-state)
-             (pop-state)
-             (push-state new-state))
-           (do-begin-object ()
+          ((write-begin-object ()
              (push-state :beginning-of-object)
              (princ "{" stream)
              (incf level))
-           (do-object-key (first)
+           (write-object-key (first)
              (unless first
                (princ "," stream))
              (write-indent)
@@ -87,57 +80,57 @@
              (when indent
                (princ " " stream))
              (switch-state :after-object-key))
-           (do-end-object ()
+           (write-end-object ()
              (decf level)
              (write-indent)
              (princ "}" stream)
              (pop-state))
-           (do-begin-array ()
+           (write-begin-array ()
              (push-state :beginning-of-array)
              (princ "[" stream)
              (incf level))
-           (do-array-item (first)
+           (write-array-item (first)
              (unless first
                (princ "," stream))
              (write-indent)
              (switch-state :after-array-item)
-             (do-value))
-           (do-end-array ()
+             (write-value))
+           (write-end-array ()
              (decf level)
              (write-indent)
              (princ "]" stream)
              (pop-state))
-           (do-value ()
+           (write-value ()
              (push-state :value)
-             (process))
-           (process ()
+             (reprocess))
+           (reprocess ()
              (ecase (car state-stack)
                (:before-json-text
                 (switch-state :after-json-text)
                 (ecase* token-type
-                  (:begin-object (do-begin-object))
-                  (:begin-array (do-begin-array))))
+                  (:begin-object (write-begin-object))
+                  (:begin-array (write-begin-array))))
                (:after-json-text
                 (ecase* token-type
-                  (:begin-object (do-begin-object))
-                  (:begin-array (do-begin-array))
+                  (:begin-object (write-begin-object))
+                  (:begin-array (write-begin-array))
                   (:eof (switch-state :closed))))
                (:beginning-of-object
                 (ecase* token-type
-                  (:end-object (do-end-object))
-                  (:string (do-object-key t))))
+                  (:end-object (write-end-object))
+                  (:string (write-object-key t))))
                (:after-object-key
                 (switch-state :after-object-value)
-                (do-value))
+                (write-value))
                (:after-object-value
                 (ecase* token-type
-                  (:end-object (do-end-object))
-                  (:string (do-object-key nil))))
+                  (:end-object (write-end-object))
+                  (:string (write-object-key nil))))
                (:value
                 (pop-state)
                 (ecase* token-type
-                  (:begin-object (do-begin-object))
-                  (:begin-array (do-begin-array))
+                  (:begin-object (write-begin-object))
+                  (:begin-array (write-begin-array))
                   (:false (princ "false" stream))
                   (:null (princ "null" stream))
                   (:true (princ "true" stream))
@@ -145,13 +138,13 @@
                   (:number (write-number token))))
                (:beginning-of-array
                 (case token-type
-                  (:end-array (do-end-array))
-                  (otherwise (do-array-item t))))
+                  (:end-array (write-end-array))
+                  (otherwise (write-array-item t))))
                (:after-array-item
                 (case token-type
-                  (:end-array (do-end-array))
-                  (otherwise (do-array-item nil))))
+                  (:end-array (write-end-array))
+                  (otherwise (write-array-item nil))))
                (:closed
                 (json-error "Writing to closed json-stream: ~S" token)))))
-        (process))))
+        (reprocess))))
   token)

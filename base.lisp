@@ -37,8 +37,11 @@
 
 
 (defmacro ecase* (keyform &body cases)
-  `(case ,keyform
-     ,@cases
-     (otherwise (json-error "Expected one of ~S in state ~S"
-                            ',(mapcar #'car cases)
-                            (slot-value *json-stream* 'state-stack)))))
+  (let ((key (gensym "KEY")))
+    `(let ((,key ,keyform))
+       (case ,key
+         ,@cases
+         (otherwise (json-error "Expected one of ~S, got ~S in state ~S"
+                                ',(mapcar #'car cases)
+                                ,key
+                                (slot-value *json-stream* 'state-stack)))))))
