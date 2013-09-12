@@ -8,7 +8,7 @@
   (let ((jstream (make-json-input-stream in)))
     (loop repeat 1000
           for token = (handler-case (multiple-value-list (read-raw-token jstream))
-                        (json-parse-error () (list :error)))
+                        (json-error () (list :error)))
           collect (car token)
           until (member (car token) '(:eof :error)))))
 
@@ -16,7 +16,7 @@
   (let ((jstream (make-json-input-stream in)))
     (loop repeat 1000
           for token = (handler-case (multiple-value-list (json-read jstream))
-                        (json-parse-error (e)
+                        (json-error (e)
                           (format t "~%    ~A" e)
                           (list :error)))
           collect (car token)

@@ -5,6 +5,7 @@
   :serial t
   :components ((:file "package")
                (:file "write-float")
+               (:file "base")
                (:file "output-stream")
 	       (:file "input-stream")
                (:file "parse")

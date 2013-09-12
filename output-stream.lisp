@@ -1,16 +1,11 @@
 (in-package #:json-streams)
 
 
-(defvar *json-output-stream*)
-
-
-(defclass json-output-stream ()
-  ((stream :initarg :stream)
-   (manyp :initarg :manyp)
+(defclass json-output-stream (json-stream)
+  ((manyp :initarg :manyp)
    (only-ascii :initform t)
    (indent :initform nil :initarg :indent)
-   (level :initform 0)
-   (state-stack :initform '(:before-json-text))))
+   (level :initform 0)))
 
 
 (defun make-json-output-stream (stream &key manyp)
@@ -20,14 +15,14 @@
 
 
 (defun write-indent ()
-  (with-slots (stream indent level) *json-output-stream*
+  (with-slots (stream indent level) *json-stream*
     (when indent
       (terpri stream)
       (dotimes (i level)
         (princ " " stream)))))
 
 (defun write-number (number)
-  (with-slots (stream level) *json-output-stream*
+  (with-slots (stream level) *json-stream*
     (multiple-value-bind (quotient remainder)
         (floor number)
       (if (and (zerop remainder)
@@ -45,7 +40,7 @@
            (write-escape (+ (ldb (byte 10 0) (- code-point #x10000)) #xDC00))))))
 
 (defun write-escaped-string (string)
-  (with-slots (stream level only-ascii) *json-output-stream*
+  (with-slots (stream level only-ascii) *json-stream*
     (princ #\" stream)
     (loop for char across string do
           (case char
@@ -64,8 +59,8 @@
                  (princ char stream)))))
     (princ #\" stream)))
 
-(defun json-write (token *json-output-stream*)
-  (with-slots (state-stack stream indent level) *json-output-stream*
+(defun json-write (token *json-stream*)
+  (with-slots (state-stack stream indent level) *json-stream*
     (let ((token-type (etypecase token
                         (keyword token)
                         (null nil)
@@ -77,7 +72,8 @@
            (pop-state ()
              (pop state-stack))
            (switch-state (new-state)
-             (setf (car state-stack) new-state))
+             (pop-state)
+             (push-state new-state))
            (do-begin-object ()
              (push-state :beginning-of-object)
              (princ "{" stream)
@@ -118,28 +114,28 @@
              (ecase (car state-stack)
                (:before-json-text
                 (switch-state :after-json-text)
-                (ecase token-type
+                (ecase* token-type
                   (:begin-object (do-begin-object))
                   (:begin-array (do-begin-array))))
                (:after-json-text
-                (ecase token-type
+                (ecase* token-type
                   (:begin-object (do-begin-object))
                   (:begin-array (do-begin-array))
-                  ((nil) :end-of-file)))
+                  (:eof (switch-state :closed))))
                (:beginning-of-object
-                (ecase token-type
+                (ecase* token-type
                   (:end-object (do-end-object))
                   (:string (do-object-key t))))
                (:after-object-key
                 (switch-state :after-object-value)
                 (do-value))
                (:after-object-value
-                (ecase token-type
+                (ecase* token-type
                   (:end-object (do-end-object))
                   (:string (do-object-key nil))))
                (:value
                 (pop-state)
-                (ecase token-type
+                (ecase* token-type
                   (:begin-object (do-begin-object))
                   (:begin-array (do-begin-array))
                   (:false (princ "false" stream))
@@ -154,6 +150,8 @@
                (:after-array-item
                 (case token-type
                   (:end-array (do-end-array))
-                  (otherwise (do-array-item nil)))))))
+                  (otherwise (do-array-item nil))))
+               (:closed
+                (json-error "Writing to closed json-stream: ~S" token)))))
         (process))))
   token)
