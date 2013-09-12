@@ -52,14 +52,18 @@ parse.lisp and stringify.lisp for example of how to use this
 interface.
 
 Function
-JSON-STREAMS:MAKE-JSON-INPUT-STREAM stream &key manyp max-exponent
+JSON-STREAMS:MAKE-JSON-INPUT-STREAM stream &key manyp use-ratios max-exponent
 
 Creates a JSON input stream like object.
 
-- manyp - Default NIL. When NIL only a single JSON text (object or
-  array) is expected in the stream. When T, any number of JSON texts
+- manyp - Default NIL.  When NIL only a single JSON text (object or
+  array) is expected in the stream.  When T, any number of JSON texts
   can be read from stream.
-- max-exponent - Default 308. The maximum (positive and negative)
+- use-ratios - Default NIL.  When false, numbers that are not integers
+  are returned as double-floats.  Then true, these numbers are
+  returned as ratios.  Please note that numbers such as 2.0 are always
+  returned as the integer 2.
+- max-exponent - Default 308.  The maximum (positive and negative)
   exponent accepted in numbers.
 
 Function
