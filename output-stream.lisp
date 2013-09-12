@@ -3,16 +3,17 @@
 
 (defclass json-output-stream (json-stream)
   ((manyp :initarg :manyp)
-   (only-ascii :initform t)
+   (escape-non-ascii :initarg :escape-non-ascii)
    (indent :initarg :indent)
    (level :initform 0)))
 
 
-(defun make-json-output-stream (stream &key manyp indent)
+(defun make-json-output-stream (stream &key manyp indent escape-non-ascii)
   (make-instance 'json-output-stream
                  :stream stream
                  :manyp manyp
-                 :indent indent))
+                 :indent indent
+                 :escape-non-ascii escape-non-ascii))
 
 
 (defun write-indent ()
@@ -21,6 +22,7 @@
       (terpri stream)
       (dotimes (i level)
         (princ #\Tab stream)))))
+
 
 (defun write-number (number)
   (with-slots (stream level) *json-stream*
@@ -31,6 +33,7 @@
           (princ quotient stream)
           (write-float number stream)))))
 
+
 (defun write-unicode (stream code-point)
   (flet ((write-escape (value)
            (format stream "\\u~4,'0X" value)))
@@ -40,8 +43,9 @@
            (write-escape (+ (ldb (byte 10 10) (- code-point #x10000)) #xD800))
            (write-escape (+ (ldb (byte 10 0) (- code-point #x10000)) #xDC00))))))
 
+
 (defun write-escaped-string (string)
-  (with-slots (stream level only-ascii) *json-stream*
+  (with-slots (stream level escape-non-ascii) *json-stream*
     (princ #\" stream)
     (loop for char across string do
           (case char
@@ -54,11 +58,12 @@
             (#\Tab (princ "\\t" stream))
             (otherwise
              (if (or (char< char #\Space)
-                     (and only-ascii
+                     (and escape-non-ascii
                           (> (char-code char) 127)))
                  (write-unicode stream (char-code char))
                  (princ char stream)))))
     (princ #\" stream)))
+
 
 (defun json-write (token *json-stream*)
   (with-slots (state-stack stream indent level) *json-stream*
