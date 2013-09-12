@@ -4,14 +4,15 @@
 (defclass json-output-stream (json-stream)
   ((manyp :initarg :manyp)
    (only-ascii :initform t)
-   (indent :initform nil :initarg :indent)
+   (indent :initarg :indent)
    (level :initform 0)))
 
 
-(defun make-json-output-stream (stream &key manyp)
+(defun make-json-output-stream (stream &key manyp indent)
   (make-instance 'json-output-stream
                  :stream stream
-                 :manyp manyp))
+                 :manyp manyp
+                 :indent indent))
 
 
 (defun write-indent ()
@@ -19,7 +20,7 @@
     (when indent
       (terpri stream)
       (dotimes (i level)
-        (princ " " stream)))))
+        (princ #\Tab stream)))))
 
 (defun write-number (number)
   (with-slots (stream level) *json-stream*

@@ -69,7 +69,10 @@ Parses JSON text from the underlying stream and returns the next
 token.
 
 Function
-JSON-STREAMS:MAKE-JSON-OUTPUT-STREAM stream &key manyp
+JSON-STREAMS:MAKE-JSON-OUTPUT-STREAM stream &key manyp indent
+
+- indent - Default NIL. Then true, the JSON text is broken into lines
+  and indented.
 
 Creates a JSON output stream.
 
