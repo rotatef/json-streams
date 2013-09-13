@@ -33,9 +33,14 @@ The high level interface uses the following datatype mapping:
 | object | hash-table with keys as strings        |
 
 Function
-JSON-STREAMS:JSON-PARSE source &key manyp max-exponent
+JSON-STREAMS:JSON-PARSE source &key max-exponent
 
 Parses JSON text from source, either a character stream or a string.
+
+Function
+JSON-STREAMS:JSON-PARSE-MULTIPLE source &key max-exponent
+
+Parses zero or more JSON texts from source. Returns a list.
 
 Function
 JSON-STREAMS:JSON-STRINGIFY value &optional target &rest options
@@ -52,12 +57,12 @@ parse.lisp and stringify.lisp for example of how to use this
 interface.
 
 Function
-JSON-STREAMS:MAKE-JSON-INPUT-STREAM stream &key manyp use-ratios max-exponent
+JSON-STREAMS:MAKE-JSON-INPUT-STREAM stream &key multiple use-ratios max-exponent
 
 Creates a JSON input stream like object.
 
-- manyp - Default NIL.  When NIL only a single JSON text (object or
-  array) is expected in the stream.  When T, any number of JSON texts
+- multiple - Default NIL.  When NIL only a single JSON text (object or
+  array) is expected in the stream.  When T, zero or more JSON texts
   can be read from stream.
 - use-ratios - Default NIL.  When false, numbers that are not integers
   are returned as double-floats.  Then true, these numbers are

@@ -5,7 +5,7 @@
 
 
 (defclass json-input-stream (json-stream)
-  ((manyp :initarg :manyp)
+  ((multiple :initarg :multiple)
    (use-ratios :initarg :use-ratios)
    (max-exponent :initarg :max-exponent)
    (raw-strings :initarg :raw-strings)
@@ -15,11 +15,13 @@
    (string-mode :initform nil)))
 
 
-(defun make-json-input-stream (stream &key close-stream manyp use-ratios (max-exponent 308) raw-strings)
+(defun make-json-input-stream (source &key (start 0) end close-stream multiple use-ratios (max-exponent 308) raw-strings)
   (make-instance 'json-input-stream
-                 :stream stream
+                 :stream (if (stringp source)
+                             (make-string-input-stream source start end)
+                             source)
                  :close-stream close-stream
-                 :manyp manyp
+                 :multiple multiple
                  :use-ratios use-ratios
                  :max-exponent max-exponent
                  :raw-strings raw-strings))
@@ -157,6 +159,8 @@
   (with-slots (string-mode) *json-stream*
     (let ((start-pos (current-position)))
       (cond
+        ((eql :eof (car (state-stack)))
+         (values :eof start-pos start-pos))
         (string-mode
          (case (peek-next-char)
            ((nil) (values :eof start-pos (current-position)))
@@ -268,7 +272,7 @@
 
 
 (defun read-token (&optional start (*json-stream* *json-stream*))
-  (with-slots (manyp stream) *json-stream*
+  (with-slots (multiple stream) *json-stream*
     (multiple-value-bind (token start2 end)
         (read-raw-token)
       (unless start
@@ -281,7 +285,7 @@
         (labels ((reprocess ()
                    (ecase (car (state-stack))
                      (:before-json-text
-                      (unless manyp
+                      (unless multiple
                         (switch-state :after-json-text))
                       (ecase* token-type
                         (:begin-object
@@ -289,7 +293,12 @@
                          (values token start end))
                         (:begin-array
                          (push-state :before-first-array-item)
-                         (values token start end))))
+                         (values token start end))
+                        (:eof
+                         (unless multiple
+                           (json-error "Empty JSON text"))
+                         (switch-state :eof)
+                         (values :eof start end))))
 
                      (:begin-object
                       (ecase* token-type
@@ -360,14 +369,17 @@
                      (:after-json-text
                       (ecase* token-type
                         (:eof
-                         (values :eof start end)))))))
+                         (switch-state :eof)
+                         (values :eof start end))))
+
+                     (:eof
+                      (values :eof start end)))))
 
           (reprocess))))))
 
 
 (defmethod %json-close ((*json-stream* json-input-stream))
-  (unless (eql :eof (json-read *json-stream*))
-    (json-error "Hmm?")))
+  (json-read *json-stream*))
 
 
 (defun json-read (json-input-stream)
