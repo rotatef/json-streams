@@ -1,6 +1,10 @@
 (in-package #:json-streams)
 
 
+(when (= char-code-limit #xFFFF)
+  (push 'utf-16-strings *features*))
+
+
 (defvar *json-stream*)
 
 

@@ -215,11 +215,13 @@
               (let ((lead token)
                     (tail (read-raw-token)))
                 (unless (and (integerp tail) (<= #xDC00 tail #xDFFF))
-                  (json-error "Invalid surrogate pair ~4,'0X ~4,'0X" lead tail))
-                (princ (code-char (+ #x10000
-                                     (ash (- lead #xD800) 10)
-                                     (- tail #xDC00)))
-                       string)))
+                  (json-error "Invalid UTF-16 surrogate pair ~4,'0X ~4,'0X" lead tail))
+                #+JSON-STREAMS::UTF-16-STRINGS (progn (princ (code-char lead))
+                                                      (princ (code-char tail)))
+                #-JSON-STREAMS::UTF-16-STRINGS (princ (code-char (+ #x10000
+                                                                    (ash (- lead #xD800) 10)
+                                                                    (- tail #xDC00)))
+                                                      string)))
              (t
               (princ (code-char token) string))))
           (t
