@@ -7,4 +7,6 @@
    #:json-read
    #:make-json-out-utstream
    #:json-write
+   #:json-close
+   #:with-open-json-stream
    #:json-error))

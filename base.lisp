@@ -10,7 +10,27 @@
 
 (defclass json-stream ()
   ((stream :initarg :stream)
+   (close-stream :initarg :close-stream)
    (state-stack :initform '(:before-json-text))))
+
+
+(defgeneric %json-close (json-stream))
+
+
+(defun json-close (json-stream)
+  (with-slots (stream close-stream)
+      json-stream
+    (%json-close json-stream)
+    (when close-stream
+      (close stream))))
+
+
+(defmacro with-open-json-stream ((var stream) &body body)
+  `(let ((,var ,stream))
+     (unwind-protect
+          (progn ,@body)
+       (json-close ,var))))
+
 
 (defmacro state-stack ()
   `(slot-value *json-stream* 'state-stack))

@@ -15,9 +15,10 @@
    (string-mode :initform nil)))
 
 
-(defun make-json-input-stream (stream &key manyp use-ratios (max-exponent 308) raw-strings)
+(defun make-json-input-stream (stream &key close-stream manyp use-ratios (max-exponent 308) raw-strings)
   (make-instance 'json-input-stream
                  :stream stream
+                 :close-stream close-stream
                  :manyp manyp
                  :use-ratios use-ratios
                  :max-exponent max-exponent
@@ -362,6 +363,11 @@
                          (values :eof start end)))))))
 
           (reprocess))))))
+
+
+(defmethod %json-close ((*json-stream* json-input-stream))
+  (unless (eql :eof (json-read *json-stream*))
+    (json-error "Hmm?")))
 
 
 (defun json-read (json-input-stream)

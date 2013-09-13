@@ -8,9 +8,10 @@
    (level :initform 0)))
 
 
-(defun make-json-output-stream (stream &key manyp indent escape-non-ascii)
+(defun make-json-output-stream (stream &key close-stream manyp indent escape-non-ascii)
   (make-instance 'json-output-stream
                  :stream stream
+                 :close-stream close-stream
                  :manyp manyp
                  :indent indent
                  :escape-non-ascii escape-non-ascii))

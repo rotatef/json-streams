@@ -21,8 +21,10 @@
                  (:begin-array (parse-array jstream))
                  (:begin-object (parse-object jstream))
                  (otherwise token)))))
-    (parse-value (apply #'make-json-input-stream
-                        (if (stringp source)
-                            (make-string-input-stream source)
-                            source)
-                        options))))
+    (with-open-json-stream (jstream (apply #'make-json-input-stream
+                                           (if (stringp source)
+                                               (make-string-input-stream source)
+                                               source)
+                                           :close-stream t
+                                           options))
+      (parse-value jstream))))
