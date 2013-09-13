@@ -8,18 +8,20 @@
   ((manyp :initarg :manyp)
    (use-ratios :initarg :use-ratios)
    (max-exponent :initarg :max-exponent)
+   (raw-strings :initarg :raw-strings)
    (current-char :initform nil)
    (position :initform 0)
    (newlines :initform '())
    (string-mode :initform nil)))
 
 
-(defun make-json-input-stream (stream &key manyp use-ratios (max-exponent 308))
+(defun make-json-input-stream (stream &key manyp use-ratios (max-exponent 308) raw-strings)
   (make-instance 'json-input-stream
                  :stream stream
                  :manyp manyp
                  :use-ratios use-ratios
-                 :max-exponent max-exponent))
+                 :max-exponent max-exponent
+                 :raw-strings raw-strings))
 
 
 (defun current-position ()
@@ -186,7 +188,7 @@
            (otherwise (json-error "Unexpected character ~S" (read-next-char)))))))))
 
 
-(defun parse-string (start)
+(defun parse-string-to-string (start)
   (let (token start2 end)
     (values
      (with-output-to-string (string)
@@ -227,6 +229,41 @@
           (t
            (json-error "Invalid token ~S in string." token)))))
      start end)))
+
+
+(defun parse-raw-string (start)
+  (let (token start2 end
+              (raw-string (make-array 0 :element-type '(unsigned-byte 16) :fill-pointer t :adjustable t)))
+     (loop
+      (multiple-value-setq (token start2 end)
+        (read-raw-token))
+      (cond
+        ((eql :string-delimiter token)
+         (return))
+        ((stringp token)
+         (loop for char across token
+               do (vector-push-extend (char-code char) raw-string)))
+        ((characterp token)
+         (vector-push-extend (char-code (case token
+                                ((#\" #\\ #\/) token)
+                                (#\b #\Backspace)
+                                (#\f #\Page)
+                                (#\n #\Newline)
+                                (#\r #\Return)
+                                (#\t #\Tab)
+                                (otherwise (json-error "Invalid escape \\~A" token))))
+                             raw-string))
+        ((integerp token)
+         (vector-push-extend token raw-string))
+        (t
+         (json-error "Invalid token ~S in string." token))))
+     (values raw-string start end)))
+
+
+(defun parse-string (start)
+  (if (slot-value *json-stream* 'raw-strings)
+      (parse-raw-string start)
+      (parse-string-to-string start)))
 
 
 (defun read-token (&optional start (*json-stream* *json-stream*))

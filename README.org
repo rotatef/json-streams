@@ -65,6 +65,10 @@ Creates a JSON input stream like object.
   returned as the integer 2.
 - max-exponent - Default 308.  The maximum (positive and negative)
   exponent accepted in numbers.
+- raw-strings - Default NIL.  When true, strings are returned as
+  vectors of numbers, representing unicode code points.  For unicode
+  escape sequences in strings (\uXXXX), no UTF-16 validation or decoding
+  is done.
 
 Function
 JSON-STREAMS:JSON-READ json-input-stream
