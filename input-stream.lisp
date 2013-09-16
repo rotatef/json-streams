@@ -10,7 +10,7 @@
    (max-exponent :initarg :max-exponent)
    (raw-strings :initarg :raw-strings)
    (current-char :initform nil)
-   (position :initform 0)
+   (position :initarg :position :reader json-stream-position)
    (newlines :initform '())
    (string-mode :initform nil)))
 
@@ -20,6 +20,7 @@
                  :stream (if (stringp source)
                              (make-string-input-stream source start end)
                              source)
+                 :position start
                  :close-stream close-stream
                  :multiple multiple
                  :use-ratios use-ratios

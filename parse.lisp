@@ -35,4 +35,4 @@
                  (:begin-object (parse-object jstream))
                  (otherwise token)))))
     (values (parse-value jstream)
-            (slot-value jstream 'position))))
+            (json-stream-position jstream))))
