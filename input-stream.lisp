@@ -70,7 +70,7 @@
   (loop for expect across string
         for char = (read-next-char)
         unless (eql char expect)
-        do (json-error "Expected ~S (as part of ~S), got ~S" expect string char))
+        do (%json-error "Expected ~S (as part of ~S), got ~S" expect string char))
   (values token start (current-position)))
 
 
@@ -94,7 +94,7 @@
         for char = (read-next-char)
         for digit = (and char (digit-char-p char 16))
         do (unless digit
-             (json-error "Invalid char ~S in Unicode escape" char))
+             (%json-error "Invalid char ~S in Unicode escape" char))
         sum (* digit weight)))
 
 
@@ -114,7 +114,7 @@
 	while digit
 	finally (progn (unread-current-char)
 		       (unless (plusp size)
-			 (json-error "Expected digit, got ~S" char))
+			 (%json-error "Expected digit, got ~S" char))
 		       (return (if fractional-p
 				   (/ number (expt 10 size))
 				   number)))))
@@ -146,7 +146,7 @@
       (setf exponent (read-integer)))
     (with-slots (use-ratios max-exponent) *json-stream*
       (when (> exponent max-exponent)
-        (json-error "Exponent ~A is too large (or small) (max-exponent is ~A)" exponent max-exponent))
+        (%json-error "Exponent ~A is too large (or small) (max-exponent is ~A)" exponent max-exponent))
       (let ((number (* sign
                  (+ integer-part fraction-part)
                  (expt 10 (* exponent-sign exponent)))))
@@ -171,7 +171,7 @@
            (#\\ (read-escaped start-pos))
            (otherwise
             (unless (valid-unescaped-char-p (peek-next-char))
-              (json-error "Invalid char in string: ~S " (read-next-char)))
+              (%json-error "Invalid char in string: ~S " (read-next-char)))
             (values (read-string-chars) start-pos (current-position)))))
         (t
          (skip-space)
@@ -191,7 +191,7 @@
            (#\" (read-next-char)
                 (setf string-mode t)
                 (values :string-delimiter start-pos (current-position)))
-           (otherwise (json-error "Unexpected character ~S" (read-next-char)))))))))
+           (otherwise (%json-error "Unexpected character ~S" (read-next-char)))))))))
 
 
 (defun parse-string-to-string (start)
@@ -214,16 +214,16 @@
              (#\n (princ #\Newline string))
              (#\r (princ #\Return string))
              (#\t (princ #\Tab string))
-             (otherwise (json-error "Invalid escape \\~A" token))))
+             (otherwise (%json-error "Invalid escape \\~A" token))))
           ((integerp token)
            (cond
              ((<= #xDC00 token #xDFFF)
-              (json-error "Invalid unicode escape ~4,'0X" token))
+              (%json-error "Invalid unicode escape ~4,'0X" token))
              ((<= #xD800 token #xDBFF)
               (let ((lead token)
                     (tail (read-raw-token)))
                 (unless (and (integerp tail) (<= #xDC00 tail #xDFFF))
-                  (json-error "Invalid UTF-16 surrogate pair ~4,'0X ~4,'0X" lead tail))
+                  (%json-error "Invalid UTF-16 surrogate pair ~4,'0X ~4,'0X" lead tail))
                 #+JSON-STREAMS::UTF-16-STRINGS (progn (princ (code-char lead))
                                                       (princ (code-char tail)))
                 #-JSON-STREAMS::UTF-16-STRINGS (princ (code-char (+ #x10000
@@ -233,7 +233,7 @@
              (t
               (princ (code-char token) string))))
           (t
-           (json-error "Invalid token ~S in string." token)))))
+           (%json-error "Invalid token ~S in string." token)))))
      start end)))
 
 
@@ -257,12 +257,12 @@
                                 (#\n #\Newline)
                                 (#\r #\Return)
                                 (#\t #\Tab)
-                                (otherwise (json-error "Invalid escape \\~A" token))))
+                                (otherwise (%json-error "Invalid escape \\~A" token))))
                              raw-string))
         ((integerp token)
          (vector-push-extend token raw-string))
         (t
-         (json-error "Invalid token ~S in string." token))))
+         (%json-error "Invalid token ~S in string." token))))
      (values raw-string start end)))
 
 
@@ -297,7 +297,7 @@
                          (values token start end))
                         (:eof
                          (unless multiple
-                           (json-error "Empty JSON text"))
+                           (%json-error "Empty JSON text"))
                          (switch-state :eof)
                          (values :eof start end))))
 

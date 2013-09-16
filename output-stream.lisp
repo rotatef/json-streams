@@ -120,7 +120,7 @@
                   (:begin-array (write-begin-array))
                   (:eof
                    (unless multiple
-                     (json-error "Empty JSON text"))
+                     (%json-error "Empty JSON text"))
                    (switch-state :eof))))
                (:after-json-text
                 (ecase* token-type

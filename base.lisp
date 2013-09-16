@@ -56,7 +56,7 @@
                                    'position))))))
 
 
-(defun json-error (message &rest args)
+(defun %json-error (message &rest args)
   (error 'json-error :message (apply #'format nil message args)))
 
 
@@ -65,7 +65,7 @@
     `(let ((,key ,keyform))
        (case ,key
          ,@cases
-         (otherwise (json-error "Expected one of ~S, got ~S in state ~S"
+         (otherwise (%json-error "Expected one of ~S, got ~S in state ~S"
                                 ',(mapcar #'car cases)
                                 ,key
                                 (slot-value *json-stream* 'state-stack)))))))
