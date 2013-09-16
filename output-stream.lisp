@@ -2,17 +2,17 @@
 
 
 (defclass json-output-stream (json-stream)
-  ((manyp :initarg :manyp)
+  ((multiple :initarg :multiple)
    (escape-non-ascii :initarg :escape-non-ascii)
    (indent :initarg :indent)
    (level :initform 0)))
 
 
-(defun make-json-output-stream (stream &key close-stream manyp indent escape-non-ascii)
+(defun make-json-output-stream (stream &key close-stream multiple indent escape-non-ascii)
   (make-instance 'json-output-stream
                  :stream stream
                  :close-stream close-stream
-                 :manyp manyp
+                 :multiple multiple
                  :indent indent
                  :escape-non-ascii escape-non-ascii))
 
@@ -67,7 +67,7 @@
 
 
 (defun json-write (token *json-stream*)
-  (with-slots (state-stack stream indent level) *json-stream*
+  (with-slots (state-stack multiple stream indent level) *json-stream*
     (let ((token-type (etypecase token
                         (keyword token)
                         (null nil)
@@ -113,15 +113,18 @@
            (reprocess ()
              (ecase (car state-stack)
                (:before-json-text
-                (switch-state :after-json-text)
-                (ecase* token-type
-                  (:begin-object (write-begin-object))
-                  (:begin-array (write-begin-array))))
-               (:after-json-text
+                (unless multiple
+                  (switch-state :after-json-text))
                 (ecase* token-type
                   (:begin-object (write-begin-object))
                   (:begin-array (write-begin-array))
-                  (:eof (switch-state :closed))))
+                  (:eof
+                   (unless multiple
+                     (json-error "Empty JSON text"))
+                   (switch-state :eof))))
+               (:after-json-text
+                (ecase* token-type
+                  (:eof (switch-state :eof))))
                (:beginning-of-object
                 (ecase* token-type
                   (:end-object (write-end-object))
@@ -151,7 +154,12 @@
                 (case token-type
                   (:end-array (write-end-array))
                   (otherwise (write-array-item nil))))
-               (:closed
-                (json-error "Writing to closed json-stream: ~S" token)))))
+               (:eof
+                (ecase* token-type
+                  (:eof))))))
         (reprocess))))
   token)
+
+
+(defmethod %json-close ((*json-stream* json-output-stream))
+  (json-write :eof *json-stream*))
