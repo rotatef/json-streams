@@ -35,6 +35,7 @@
                     (list (+ d 1)))))))))
 
 (defun scale (r s m+ m- k BB low-ok-p high-ok-p v)
+  (declare (ignore k))
   (let ((est (ceiling (- (logB BB v) 1d-10))))
     (if (>= est 0)
         (fixup r (* s (exptt BB est)) m+ m- est BB low-ok-p high-ok-p)
