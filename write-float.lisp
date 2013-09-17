@@ -81,8 +81,8 @@
         (when (minusp s)
           (princ "-" stream))
         (if (and (< (length digits) 16)
-                 (<= -3 exp 6))
+                 (<= -2 exp 8))
             (if (plusp exp)
                 (format stream "~{~D~}.~{~D~}" (subseq digits 0 exp) (subseq digits exp))
-                (format stream "0.~v@{0~}~{~D~}" exp digits))
-            (format stream "0.~{~D~}E~D" digits exp))))))
+                (format stream "0.~v@{0~}~{~D~}" (abs exp) digits))
+            (format stream "~D.~:[0~;~:*~{~D~}~]E~D" (first digits) (rest digits) (1- exp)))))))
