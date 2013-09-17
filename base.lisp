@@ -13,9 +13,7 @@
    (close-stream :initarg :close-stream)
    (state-stack :initform '(:before-json-text))
    (duplicate-key-check :initarg :duplicate-key-check)
-   (key-check-stack :initform nil)
-   (position :initform 0 :initarg :position :reader json-stream-position)
-   (newlines :initform nil)))
+   (key-check-stack :initform nil)))
 
 
 (defgeneric %json-close (json-stream))
