@@ -15,13 +15,14 @@
    (string-mode :initform nil)))
 
 
-(defun make-json-input-stream (source &key (start 0) end close-stream multiple use-ratios (max-exponent 308) raw-strings)
+(defun make-json-input-stream (source &key (start 0) end close-stream multiple use-ratios (max-exponent 308) raw-strings (duplicate-key-check t))
   (make-instance 'json-input-stream
                  :stream (if (stringp source)
                              (make-string-input-stream source start end)
                              source)
                  :position start
                  :close-stream close-stream
+                 :duplicate-key-check duplicate-key-check
                  :multiple multiple
                  :use-ratios use-ratios
                  :max-exponent max-exponent
@@ -291,6 +292,7 @@
                       (ecase* token-type
                         (:begin-object
                          (push-state :begin-object)
+                         (begin-object)
                          (values token start end))
                         (:begin-array
                          (push-state :before-first-array-item)
@@ -305,10 +307,14 @@
                       (ecase* token-type
                         (:end-object
                          (pop-state)
+                         (end-object)
                          (values token start end))
                         (:string-delimiter
                          (switch-state :after-object-key)
-                         (parse-string start))))
+                         (multiple-value-bind (key start end)
+                             (parse-string start)
+                           (check-key key)
+                           (values key start end)))))
 
                      (:after-object-key
                       (ecase* token-type
@@ -324,13 +330,17 @@
                          (read-token start))
                         (:end-object
                          (pop-state)
+                         (end-object)
                          (values token start end))))
 
                      (:before-object-key
                       (ecase* token-type
                         (:string-delimiter
                          (switch-state :after-object-key)
-                         (parse-string start))))
+                         (multiple-value-bind (key start end)
+                             (parse-string start)
+                           (check-key key)
+                           (values key start end)))))
 
                      (:before-first-array-item
                       (case token-type
@@ -356,6 +366,7 @@
                       (ecase* token-type
                         (:begin-object
                          (push-state :begin-object)
+                         (begin-object)
                          (values token start end))
                         (:begin-array
                          (push-state :before-first-array-item)

@@ -8,10 +8,11 @@
    (level :initform 0)))
 
 
-(defun make-json-output-stream (stream &key close-stream multiple indent escape-non-ascii)
+(defun make-json-output-stream (stream &key close-stream multiple indent escape-non-ascii (duplicate-key-check t))
   (make-instance 'json-output-stream
                  :stream stream
                  :close-stream close-stream
+                 :duplicate-key-check duplicate-key-check
                  :multiple multiple
                  :indent indent
                  :escape-non-ascii escape-non-ascii))
@@ -75,10 +76,12 @@
                         (string :string))))
       (labels
           ((write-begin-object ()
+             (begin-object)
              (push-state :beginning-of-object)
              (princ #\{ stream)
              (incf level))
            (write-object-key (first)
+             (check-key token)
              (unless first
                (princ #\, stream))
              (write-indent)
@@ -88,6 +91,7 @@
                (princ #\Space stream))
              (switch-state :after-object-key))
            (write-end-object ()
+             (end-object)
              (decf level)
              (write-indent)
              (princ #\} stream)

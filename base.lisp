@@ -11,7 +11,9 @@
 (defclass json-stream ()
   ((stream :initarg :stream)
    (close-stream :initarg :close-stream)
-   (state-stack :initform '(:before-json-text))))
+   (state-stack :initform '(:before-json-text))
+   (duplicate-key-check :initarg :duplicate-key-check)
+   (key-check-stack :initform nil)))
 
 
 (defgeneric %json-close (json-stream))
@@ -31,6 +33,25 @@
           (progn ,@body)
        (json-close ,var))))
 
+(defun begin-object ()
+  (with-slots (duplicate-key-check key-check-stack)
+      *json-stream*
+    (when duplicate-key-check
+      (push (make-hash-table :test #'equal) key-check-stack))))
+
+(defun end-object ()
+  (with-slots (duplicate-key-check key-check-stack)
+      *json-stream*
+    (when duplicate-key-check
+      (pop key-check-stack))))
+
+(defun check-key (key)
+  (with-slots (duplicate-key-check key-check-stack)
+      *json-stream*
+    (when duplicate-key-check
+      (when (gethash key (car key-check-stack))
+        (%json-error "Duplicate key ~S in object" key))
+      (setf (gethash key (car key-check-stack)) t))))
 
 (defmacro state-stack ()
   `(slot-value *json-stream* 'state-stack))
