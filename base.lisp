@@ -13,7 +13,9 @@
    (close-stream :initarg :close-stream)
    (state-stack :initform '(:before-json-text))
    (duplicate-key-check :initarg :duplicate-key-check)
-   (key-check-stack :initform nil)))
+   (key-check-stack :initform nil)
+   (position :initform 0 :initarg :position :reader json-stream-position)
+   (newlines :initform nil)))
 
 
 (defgeneric %json-close (json-stream))
@@ -66,19 +68,38 @@
   (pop-state)
   (push-state new-state))
 
+(defun find-line-num (json-stream)
+  (with-slots (newlines position)
+      json-stream
+    (loop for line from 1
+          for newline in newlines
+          )))
+
 (define-condition json-error (error)
   ((stream :initform *json-stream* :initarg :stream :reader json-error-stream)
-   (message :initarg :message :reader json-error-message))
+   (message :initarg :message :reader json-error-message)))
+
+
+(define-condition json-parse-error (json-error)
+  ()
   (:report (lambda (c stream)
-             (format stream "~A at ~S"
-                     (json-error-message c)
-                     (when (typep (json-error-stream c) 'json-input-stream)
-                       (slot-value (json-error-stream c)
-                                   'position))))))
+             (format stream "JSON parse error at line ~D column ~D: ~A"
+                     (1+ (length (slot-value (json-error-stream c) 'newlines)))
+                     (- (slot-value (json-error-stream c) 'position)
+                        (or (car (slot-value (json-error-stream c) 'newlines)) 0))
+                     (json-error-message c)))))
+
+(define-condition json-write-error (json-error)
+  ()
+  (:report (lambda (c stream)
+             (format stream "JSON write error: ~A." (json-error-message c)))))
 
 
 (defun %json-error (message &rest args)
-  (error 'json-error :message (apply #'format nil message args)))
+  (error (etypecase *json-stream*
+           (json-input-stream 'json-parse-error)
+           (json-output-stream 'json-write-error))
+         :message (apply #'format nil message args)))
 
 
 (defmacro ecase* (keyform &body cases)
@@ -86,7 +107,7 @@
     `(let ((,key ,keyform))
        (case ,key
          ,@cases
-         (otherwise (%json-error "Expected one of ~S, got ~S in state ~S"
+         (otherwise (%json-error "Expected one of ~S, got ~S in state ~S."
                                 ',(mapcar #'car cases)
                                 ,key
                                 (slot-value *json-stream* 'state-stack)))))))
