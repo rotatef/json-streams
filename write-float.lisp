@@ -65,10 +65,9 @@
         (* (log x) (svref table BB))
         (/ (log x) (log BB)))))
 
-;; Constants for 64 bit double precision floats
-(defconstant +min-e+ -1022)
-(defconstant +precision+ 53)
-(defconstant +internal-base+ 2)
+(defconstant +min-e+ (1+ (nth-value 1 (integer-decode-float least-positive-normalized-double-float))))
+(defconstant +precision+ (float-digits 0d0))
+(defconstant +float-radix+ 2)
 (defconstant +output-base+ 10)
 
 (defun write-float (real stream)
@@ -78,7 +77,7 @@
     (multiple-value-bind (f e s)
         (integer-decode-float float)
       (destructuring-bind (exp &rest digits)
-          (flonum->digits (abs float) f e +min-e+ +precision+ +internal-base+ +output-base+)
+          (flonum->digits (abs float) f e +min-e+ +precision+ +float-radix+ +output-base+)
         (when (minusp s)
           (princ "-" stream))
         (if (and (< (length digits) 16)

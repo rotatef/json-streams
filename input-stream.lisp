@@ -15,7 +15,15 @@
    (string-mode :initform nil)))
 
 
-(defun make-json-input-stream (source &key (start 0) end close-stream multiple use-ratios (max-exponent 308) raw-strings (duplicate-key-check t))
+(defun make-json-input-stream (source &key
+                                        (start 0)
+                                        end
+                                        close-stream
+                                        multiple
+                                        use-ratios
+                                        (max-exponent 325)
+                                        raw-strings
+                                        (duplicate-key-check t))
   (make-instance 'json-input-stream
                  :stream (if (stringp source)
                              (make-string-input-stream source start end)

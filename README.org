@@ -68,7 +68,7 @@ Creates a JSON input stream like object.
   are returned as double-floats.  Then true, these numbers are
   returned as ratios.  Please note that numbers such as 2.0 are always
   returned as the integer 2.
-- max-exponent - Default 308.  The maximum (positive and negative)
+- max-exponent - Default 325.  The maximum (positive and negative)
   exponent accepted in numbers.
 - raw-strings - Default NIL.  When true, strings are returned as
   vectors of numbers, representing unicode code points.  For unicode
