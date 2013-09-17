@@ -1,7 +1,7 @@
 (in-package #:json-streams)
 
 
-(when (= char-code-limit #xFFFF)
+(when (= char-code-limit #x10000)
   (push 'utf-16-strings *features*))
 
 
