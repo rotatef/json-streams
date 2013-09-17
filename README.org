@@ -10,7 +10,7 @@ A Common Lisp library for reading and writing JSON.
 - Streaming design, can proccess JSON text of unlimted size.
 
 There is already many JSON libraries for Common Lisp.  None of these
-libraries can be said to be best, they all have their strengths and
+libraries ca nbe said to be best, they all have their strengths and
 weaknesses.  Much of the problem lies in the fact that there is a bit
 of disparaty between JSON datatypes and Common Lisp datatypes.  This
 library is therefore designed to used as a building block for more
@@ -57,13 +57,10 @@ parse.lisp and stringify.lisp for example of how to use this
 interface.
 
 Function
-JSON-STREAMS:MAKE-JSON-INPUT-STREAM stream &key multiple use-ratios max-exponent
+JSON-STREAMS:MAKE-JSON-INPUT-STREAM source &key start end close-stream multiple duplicate-key-check use-ratios max-exponent raw-strings
 
-Creates a JSON input stream like object.
-
-- multiple - Default NIL.  When NIL only a single JSON text (object or
-  array) is expected in the stream.  When T, zero or more JSON texts
-  can be read from stream.
+- source - A character stream or a string. When source is a string,
+  start and end are bounding index designators of string.
 - use-ratios - Default NIL.  When false, numbers that are not integers
   are returned as double-floats.  Then true, these numbers are
   returned as ratios.  Please note that numbers such as 2.0 are always
@@ -76,20 +73,30 @@ Creates a JSON input stream like object.
   is done.
 
 Function
+JSON-STREAMS:MAKE-JSON-OUTPUT-STREAM stream &key close-stream multiple duplicate-key-check indent escape-non-ascii
+
+- stream - A character stream.
+- indent - Default NIL.  When true, the JSON text is broken into lines
+  and indented.
+- escape-non-ascii - Default NIL. When true, any character outside the
+  ASCII character set will be escaped using the \uXXXX syntax.
+
+Common options:
+
+- close-stream - Default NIL.  When T, the source stream will be
+  closed by JSON-CLOSE.
+- multiple - Default NIL.  When NIL, only a single JSON text (object or
+  array) is expected in the stream.  When T, zero or more JSON texts
+  can be read from or written to stream.
+- duplicate-key-check - Default T.  When true, an error will be
+  signaled when duplicate keys are detected in an object.  Setting
+  this to NIL avoids the added overhead of checking for duplicate keys.
+
+Function
 JSON-STREAMS:JSON-READ json-input-stream
 
 Parses JSON text from the underlying stream and returns the next
 token.
-
-Function
-JSON-STREAMS:MAKE-JSON-OUTPUT-STREAM stream &key manyp indent escape-non-ascii
-
-- indent - Default NIL. Then true, the JSON text is broken into lines
-  and indented.
-- escape-non-ascii - Default NIL. When true, any character outside the
-  ascii character set will be escaped using the \uXXXX syntax.
-
-Creates a JSON output stream.
 
 Function
 JSON-STREAMS:JSON-WRITE token json-output-stream
@@ -107,6 +114,7 @@ The possible tokens for input and output are
 - :TRUE
 - A number
 - A string
+- A vector of integers
 - :EOF
 
 After a :BEGIN-OBJECT is returned, JSON-READ will alternate between
@@ -115,7 +123,3 @@ instead of a key.  Keys are always returned as strings.  Values can be
 anything, except :END-OBJECT, :END-ARRAY and :EOF.  Thus some kind of
 recursive or stack based algorithm is neccearry.
 
-Duplicate keys in objects are not detected.
-
-Numbers are returned as integers or ratios. For output floats are also
-accepted.

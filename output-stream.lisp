@@ -49,7 +49,9 @@
 (defun write-escaped-string (string)
   (with-slots (stream level escape-non-ascii) *json-stream*
     (princ #\" stream)
-    (loop for char across string do
+    (loop for elt across string
+          for char = (if (and (integerp elt) (< elt 128)) (code-char elt) elt)
+          do
           (case char
             (#\" (princ "\\\"" stream))
             (#\\ (princ "\\\\" stream))
@@ -59,11 +61,13 @@
             (#\Return (princ "\\r" stream))
             (#\Tab (princ "\\t" stream))
             (otherwise
-             (if (or (char< char #\Space)
-                     (and escape-non-ascii
-                          (> (char-code char) 127)))
-                 (write-unicode stream (char-code char))
-                 (princ char stream)))))
+             (if (integerp char)
+                 (format stream "\\u~4,'0X" char)
+                 (if (or (char< char #\Space)
+                         (and escape-non-ascii
+                              (> (char-code char) 127)))
+                     (write-unicode stream (char-code char))
+                     (princ char stream))))))
     (princ #\" stream)))
 
 
@@ -73,7 +77,7 @@
                         (keyword token)
                         (null nil)
                         (real :number)
-                        (string :string))))
+                        (vector :string))))
       (labels
           ((write-begin-object ()
              (begin-object)
