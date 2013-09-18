@@ -9,5 +9,4 @@
                (:file "output-stream")
 	       (:file "input-stream")
                (:file "parse")
-               (:file "stringify")
-               (:file "tests")))
+               (:file "stringify")))

@@ -10,6 +10,8 @@
    #:json-close
    #:with-open-json-stream
    #:json-error
+   #:json-parse-error
+   #:json-write-error
 
    #:make-json-out-utstream
    #:json-write
