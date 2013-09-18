@@ -32,13 +32,6 @@
     (peek-char nil stream nil)))
 
 
-(defun current-char ()
-  (with-slots (current-char) *json-stream*
-    (unless current-char
-      (read-next-char))
-    current-char))
-
-
 (defun read-next-char ()
   (with-slots (stream current-char position newlines) *json-stream*
     (setf current-char (read-char stream nil))
@@ -275,9 +268,7 @@
         (setf start start2))
       (let ((token-type (etypecase token
                           (keyword token)
-                          (null nil)
-                          (real :number)
-                          (string :string))))
+                          (real :number))))
         (labels ((reprocess ()
                    (ecase (car (state-stack))
                      (:before-json-text

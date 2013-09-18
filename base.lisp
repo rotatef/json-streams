@@ -84,13 +84,6 @@
   (pop-state)
   (push-state new-state))
 
-(defun find-line-num (json-stream)
-  (with-slots (newlines position)
-      json-stream
-    (loop for line from 1
-          for newline in newlines
-          )))
-
 (define-condition json-error (error)
   ((stream :initform *json-stream* :initarg :stream :reader json-error-stream)
    (message :initarg :message :reader json-error-message)))
