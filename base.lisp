@@ -16,6 +16,24 @@
    (key-check-stack :initform nil)))
 
 
+(defclass json-input-stream (json-stream)
+  ((multiple :initarg :multiple)
+   (use-ratios :initarg :use-ratios)
+   (max-exponent :initarg :max-exponent)
+   (raw-strings :initarg :raw-strings)
+   (current-char :initform nil)
+   (position :initarg :position :reader json-stream-position)
+   (newlines :initform '())
+   (string-mode :initform nil)))
+
+
+(defclass json-output-stream (json-stream)
+  ((multiple :initarg :multiple)
+   (escape-non-ascii :initarg :escape-non-ascii)
+   (indent :initarg :indent)
+   (level :initform 0)))
+
+
 (defgeneric %json-close (json-stream))
 
 

@@ -1,20 +1,6 @@
 (in-package #:json-streams)
 
 
-(defvar *json-input-stream*)
-
-
-(defclass json-input-stream (json-stream)
-  ((multiple :initarg :multiple)
-   (use-ratios :initarg :use-ratios)
-   (max-exponent :initarg :max-exponent)
-   (raw-strings :initarg :raw-strings)
-   (current-char :initform nil)
-   (position :initarg :position :reader json-stream-position)
-   (newlines :initform '())
-   (string-mode :initform nil)))
-
-
 (defun make-json-input-stream (source &key
                                         (start 0)
                                         end

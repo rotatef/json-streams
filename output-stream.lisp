@@ -1,13 +1,6 @@
 (in-package #:json-streams)
 
 
-(defclass json-output-stream (json-stream)
-  ((multiple :initarg :multiple)
-   (escape-non-ascii :initarg :escape-non-ascii)
-   (indent :initarg :indent)
-   (level :initform 0)))
-
-
 (defun make-json-output-stream (stream &key close-stream multiple indent escape-non-ascii (duplicate-key-check t))
   (make-instance 'json-output-stream
                  :stream stream
