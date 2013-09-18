@@ -60,8 +60,8 @@
     (run-test-file file)))
 
 
-(defun read-all-tokens (in)
-  (let ((jstream (make-json-input-stream in)))
+(defun read-all-tokens (in options)
+  (with-open-json-stream (jstream (apply #'make-json-input-stream in options))
     (loop for token = (handler-case (json-read jstream)
                         (json-parse-error () :error))
           collect token
@@ -75,13 +75,14 @@
 
 
 (defun run-test-file (file)
-  (let ((expected-tokens
-         (with-open-file* (in (make-pathname :type "lisp" :defaults file))
-           (read in)
-           (read in))))
-    (with-open-file* (in file)
-      (loop for token-num from 0
-            for expected in expected-tokens
-            for got in (read-all-tokens in)
-            do (named (format nil "~A ~D" (pathname-name file) token-num)
-                 (is= expected got))))))
+  (with-open-file* (in (make-pathname :type "lisp" :defaults file))
+    (loop for options = (read in nil)
+          for expected-tokens = (read in nil)
+          while expected-tokens
+          do
+          (with-open-file* (in file)
+            (loop for token-num from 0
+                  for expected in expected-tokens
+                  for got in (read-all-tokens in options)
+                  do (named (format nil "~A ~S ~D" options (pathname-name file) token-num)
+                       (is= expected got)))))))

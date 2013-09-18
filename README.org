@@ -68,7 +68,7 @@ JSON-STREAMS:MAKE-JSON-INPUT-STREAM source &key start end close-stream multiple 
 - max-exponent - Default 325.  The maximum (positive and negative)
   exponent accepted in numbers.
 - raw-strings - Default NIL.  When true, strings are returned as
-  vectors of numbers, representing unicode code points.  For unicode
+  lists of numbers, representing unicode code points.  For unicode
   escape sequences in strings (\uXXXX), no UTF-16 validation or decoding
   is done.
 
@@ -103,6 +103,7 @@ JSON-STREAMS:JSON-WRITE token json-output-stream
 
 Outputs JSON text to underlying stream based on the given token.
 
+
 The possible tokens for input and output are
 
 - :BEGIN-OBJECT
@@ -114,7 +115,7 @@ The possible tokens for input and output are
 - :TRUE
 - A number
 - A string
-- A vector of integers
+- A list of integers
 - :EOF
 
 After a :BEGIN-OBJECT is returned, JSON-READ will alternate between

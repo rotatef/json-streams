@@ -42,25 +42,26 @@
 (defun write-escaped-string (string)
   (with-slots (stream level escape-non-ascii) *json-stream*
     (princ #\" stream)
-    (loop for elt across string
-          for char = (if (and (integerp elt) (< elt 128)) (code-char elt) elt)
-          do
-          (case char
-            (#\" (princ "\\\"" stream))
-            (#\\ (princ "\\\\" stream))
-            (#\Backspace (princ "\\b" stream))
-            (#\Page (princ "\\f" stream))
-            (#\Newline (princ "\\n" stream))
-            (#\Return (princ "\\r" stream))
-            (#\Tab (princ "\\t" stream))
-            (otherwise
-             (if (integerp char)
-                 (format stream "\\u~4,'0X" char)
-                 (if (or (char< char #\Space)
-                         (and escape-non-ascii
-                              (> (char-code char) 127)))
-                     (write-unicode stream (char-code char))
-                     (princ char stream))))))
+    (map nil (lambda (char)
+               (when (and (integerp char) (< char 128))
+                 (setf char (code-char char)))
+               (case char
+                 (#\" (princ "\\\"" stream))
+                 (#\\ (princ "\\\\" stream))
+                 (#\Backspace (princ "\\b" stream))
+                 (#\Page (princ "\\f" stream))
+                 (#\Newline (princ "\\n" stream))
+                 (#\Return (princ "\\r" stream))
+                 (#\Tab (princ "\\t" stream))
+                 (otherwise
+                  (if (integerp char)
+                      (format stream "\\u~4,'0X" char)
+                      (if (or (char< char #\Space)
+                              (and escape-non-ascii
+                                   (> (char-code char) 127)))
+                          (write-unicode stream (char-code char))
+                          (princ char stream))))))
+         string)
     (princ #\" stream)))
 
 
@@ -70,7 +71,7 @@
                         (keyword token)
                         (null nil)
                         (real :number)
-                        (vector :string))))
+                        (list :string))))
       (labels
           ((write-begin-object ()
              (begin-object)

@@ -1,12 +1,12 @@
+()
 (:begin-array
- :string-delimiter
- #xd834
- #xdd1e
- :string-delimiter
+ "𝄞a\"
+	"
  :end-array
  :eof)
 
+(:raw-strings t)
 (:begin-array
- "𝄞"
+ (#xD834 #xDD1E 97 34 8 12 10 13 9)
  :end-array
  :eof)

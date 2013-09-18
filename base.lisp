@@ -105,6 +105,7 @@
 
 
 (defun %json-error (message &rest args)
+  (switch-state :eof)
   (error (etypecase *json-stream*
            (json-input-stream 'json-parse-error)
            (json-output-stream 'json-write-error))

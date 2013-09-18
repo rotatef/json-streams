@@ -226,8 +226,7 @@
 
 
 (defun parse-raw-string (start)
-  (let (token start2 end
-              (raw-string (make-array 0 :element-type '(unsigned-byte 16) :fill-pointer t :adjustable t)))
+  (let (token start2 end raw-string)
      (loop
       (multiple-value-setq (token start2 end)
         (read-raw-token))
@@ -236,22 +235,22 @@
          (return))
         ((stringp token)
          (loop for char across token
-               do (vector-push-extend (char-code char) raw-string)))
+               do (push (char-code char) raw-string)))
         ((characterp token)
-         (vector-push-extend (char-code (case token
-                                ((#\" #\\ #\/) token)
-                                (#\b #\Backspace)
-                                (#\f #\Page)
-                                (#\n #\Newline)
-                                (#\r #\Return)
-                                (#\t #\Tab)
-                                (otherwise (%json-error "Invalid escape \\~A" token))))
-                             raw-string))
+         (push (char-code (case token
+                            ((#\" #\\ #\/) token)
+                            (#\b #\Backspace)
+                            (#\f #\Page)
+                            (#\n #\Newline)
+                            (#\r #\Return)
+                            (#\t #\Tab)
+                            (otherwise (%json-error "Invalid escape \\~A" token))))
+               raw-string))
         ((integerp token)
-         (vector-push-extend token raw-string))
+         (push token raw-string))
         (t
          (%json-error "Invalid token ~S in string." token))))
-     (values raw-string start end)))
+     (values (nreverse raw-string) start end)))
 
 
 (defun parse-string (start)

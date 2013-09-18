@@ -1,11 +1,7 @@
+()
 (:begin-array
- :string-delimiter
- "Illegal backslash escape: "
- #\x
-  "15"
- :string-delimiter
- :end-array
- :eof)
+ :error)
 
+(:raw-strings t)
 (:begin-array
  :error)

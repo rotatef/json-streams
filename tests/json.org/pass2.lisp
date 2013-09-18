@@ -1,45 +1,4 @@
-(:begin-array
- :begin-array
- :begin-array
- :begin-array
- :begin-array
- :begin-array
- :begin-array
- :begin-array
- :begin-array
- :begin-array
- :begin-array
- :begin-array
- :begin-array
- :begin-array
- :begin-array
- :begin-array
- :begin-array
- :begin-array
- :begin-array
- :string-delimiter
- "Not too deep"
- :string-delimiter
- :end-array
- :end-array
- :end-array
- :end-array
- :end-array
- :end-array
- :end-array
- :end-array
- :end-array
- :end-array
- :end-array
- :end-array
- :end-array
- :end-array
- :end-array
- :end-array
- :end-array
- :end-array
- :end-array
- :eof)
+()
 
 
 (:begin-array
