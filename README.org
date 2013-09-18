@@ -29,8 +29,9 @@ The high level interface uses the following datatype mapping:
 | null   | :NULL                                  |
 | string | string                                 |
 | number | integer, ratio and float (output only) |
-| array  | vector                                 |
-| object | hash-table with keys as strings        |
+| array  | (:array ... )                          |
+| object | (:object (key . value) ... )           |
+
 
 Function
 JSON-STREAMS:JSON-PARSE source &key max-exponent

@@ -18,4 +18,8 @@
 
    #:make-json-input-stream
    #:json-stream-position
-   #:json-read))
+   #:json-read
+
+   #:json-object
+   #:json-array
+   #:json-string))

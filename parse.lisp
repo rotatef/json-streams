@@ -16,16 +16,15 @@
 
 (defun parse-single (jstream)
   (labels ((parse-array (jstream)
-             (coerce (loop for value = (parse-value jstream)
-                           until (eql :end-array value)
-                           collect value)
-                     'vector))
+             (cons :array
+                   (loop for value = (parse-value jstream)
+                         until (eql :end-array value)
+                         collect value)))
            (parse-object (jstream)
-             (let ((object (make-hash-table :test #'equal)))
-               (loop for key = (parse-value jstream)
-                     until (eql :end-object key)
-                     do (setf (gethash key object) (parse-value jstream)))
-               object))
+             (cons :object
+                   (loop for key = (parse-value jstream)
+                         until (eql :end-object key)
+                         collect (cons key (parse-value jstream)))))
            (parse-value (jstream)
              (let ((token (json-read jstream)))
                (case token

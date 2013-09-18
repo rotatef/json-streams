@@ -7,13 +7,15 @@
     (run-test-files)))
 
 (define (a-json-array)
-  (coerce (generate (a-list a-json-value)) 'vector))
+  (cons :array (generate (a-list a-json-value))))
 
 (define (a-json-object)
-  (let ((object (make-hash-table :test #'equal)))
-    (loop for (key value) in (generate (a-list (a-tuple #'a-string a-json-value)))
-          do (setf (gethash key object) value))
-    object))
+  (cons :object
+        (remove-duplicates
+         (loop for (key value) in (generate (a-list (a-tuple #'a-string a-json-value)))
+               collect (cons key value))
+         :key #'car
+         :test #'string=)))
 
 (define (a-double-float)
   (coerce (generate a-real) 'double-float))
@@ -34,26 +36,11 @@
     (10 (generate #'a-string))
     (1 (generate (a-member a-json-array a-json-object)))))
 
-
-(generate a-json-object)
-
-
-(defun json-equal (json1 json2)
-  (cond ((and (vectorp json1) (vectorp json2))
-         (and (= (length json1) (length json2))
-              (every #'json-equal json1 json2)))
-        ((and (hash-table-p json1) (hash-table-p json2))
-         (and (= (hash-table-count json1) (hash-table-count json2))
-              (loop for key being each hash-key in json1 using (hash-value value)
-                    always (json-equal value (gethash key json2 '#:default)))))
-        (t
-         (equal json1 json2))))
-
-
 (defun random-test ()
   (for-all ((json a-json-text))
-    (is json-equal json (json-parse (princ (json-stringify json))))
+    (is= json (json-parse (princ (json-stringify json))))
     (terpri) (terpri)))
+
 
 (defun run-test-files (&optional (dir (asdf:system-relative-pathname :json-streams "tests/")))
   (dolist (file (directory (merge-pathnames "*/*.json" dir)))

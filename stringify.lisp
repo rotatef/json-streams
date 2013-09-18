@@ -33,14 +33,13 @@
      (json-write :false jstream))
     ((member :null)
      (json-write :null jstream))
-    (vector
+    (json-array
      (json-write :begin-array jstream)
-     (loop for item across value do (json-stringify-single item jstream))
+     (loop for item in (cdr value) do (json-stringify-single item jstream))
      (json-write :end-array jstream))
-    (hash-table
+    (json-object
      (json-write :begin-object jstream)
-     (maphash (lambda (k v)
-                (json-stringify-single k jstream)
-                (json-stringify-single v jstream))
-              value)
+     (loop for (k . v) in (cdr value) do
+           (json-stringify-single k jstream)
+           (json-stringify-single v jstream))
      (json-write :end-object jstream))))

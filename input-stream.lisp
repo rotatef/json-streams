@@ -250,7 +250,7 @@
          (push token raw-string))
         (t
          (%json-error "Invalid token ~S in string." token))))
-     (values (nreverse raw-string) start end)))
+     (values (cons :string (nreverse raw-string)) start end)))
 
 
 (defun parse-string (start)

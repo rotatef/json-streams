@@ -1,6 +1,17 @@
 (in-package #:json-streams)
 
 
+(deftype json-object ()
+  '(cons (member :object) t))
+
+(deftype json-array ()
+  '(cons (member :array) t))
+
+(deftype json-string ()
+  '(or string
+      (cons (member :string) t)))
+
+
 (when (= char-code-limit #x10000)
   (push 'utf-16-strings *features*))
 

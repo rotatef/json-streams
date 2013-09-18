@@ -61,7 +61,9 @@
                                    (> (char-code char) 127)))
                           (write-unicode stream (char-code char))
                           (princ char stream))))))
-         string)
+         (if (stringp string)
+             string
+             (cdr string)))
     (princ #\" stream)))
 
 
@@ -71,7 +73,7 @@
                         (keyword token)
                         (null nil)
                         (real :number)
-                        (list :string))))
+                        (json-string :string))))
       (labels
           ((write-begin-object ()
              (begin-object)
