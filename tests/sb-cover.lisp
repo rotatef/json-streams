@@ -1,0 +1,5 @@
+(require :sb-cover)
+(declaim (optimize sb-cover:store-coverage-data))
+(asdf:oos 'asdf:load-op :json-streams-tests :force t)
+(json-streams-tests::run-all-tests)
+(sb-cover:report "/tmp/report2/")
