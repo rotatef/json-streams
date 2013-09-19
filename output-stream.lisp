@@ -21,10 +21,15 @@
 
 (defun write-number (number)
   (with-slots (stream level) *json-stream*
+    (unless (or (integerp number)
+                (floatp number))
+      (%json-error "Number must be integer or float, got ~D" number))
+    (when (and (integerp number)
+               (not (<= +most-negative-json-integer+ number +most-positive-json-integer+)))
+      (%json-error "Integer ~D too large" number))
     (multiple-value-bind (quotient remainder)
         (floor number)
-      (if (and (zerop remainder)
-               (< (abs number) (expt 2 53)))
+      (if (zerop remainder)
           (princ quotient stream)
           (write-float number stream)))))
 

@@ -22,4 +22,7 @@
 
    #:json-object
    #:json-array
-   #:json-string))
+   #:json-string
+
+   #:most-positive-json-integer
+   #:most-negative-json-integer))

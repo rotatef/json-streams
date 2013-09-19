@@ -111,6 +111,8 @@
 (defun read-number (start)
   (let* ((sign 1)
 	 (integer-part 0)
+         (has-dot nil)
+         (has-e nil)
 	 (fraction-part 0)
 	 (exponent-sign 1)
 	 (exponent 0))
@@ -121,9 +123,11 @@
         (read-next-char)
         (setf integer-part (read-integer)))
     (when (eql #\. (peek-next-char))
+      (setf has-dot t)
       (read-next-char)
       (setf fraction-part (read-integer :fractional-p t)))
     (when (member (peek-next-char) '(#\e #\E))
+      (setf has-e t)
       (read-next-char)
       (case (read-next-char)
         (#\+)
@@ -138,10 +142,20 @@
       (let ((number (* sign
                  (+ integer-part fraction-part)
                  (expt 10 (* exponent-sign exponent)))))
-        (values (if (or (integerp number) use-ratios)
-                    number
-                    (coerce number 'double-float))
-                start (current-position))))))
+        (when (and (not use-ratios)
+                   (not (or has-dot has-e))
+                   (not (<= +most-negative-json-integer+ number +most-positive-json-integer+)))
+          (%json-error "Number with integer syntax to large ~D." number))
+        (values (if (and (not use-ratios)
+                         (or has-dot has-e)
+                         (or (not (<= +most-negative-json-integer+ number +most-positive-json-integer+))
+                             (not (integerp number))))
+                    (handler-case (coerce number 'double-float)
+                      (type-error () (%json-error "Number can't be converted to double-float ~D"
+                                                  number)))
+                    number)
+                start
+                (current-position))))))
 
 
 (defun read-raw-token (&optional (*json-stream* *json-stream*))

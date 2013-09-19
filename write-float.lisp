@@ -70,19 +70,16 @@
 (defconstant +float-radix+ 2)
 (defconstant +output-base+ 10)
 
-(defun write-float (real stream)
-  (let ((float (etypecase real
-                 (float real)
-                 (real (coerce real 'double-float)))))
-    (multiple-value-bind (f e s)
-        (integer-decode-float float)
-      (destructuring-bind (exp &rest digits)
-          (flonum->digits (abs float) f e +min-e+ +precision+ +float-radix+ +output-base+)
-        (when (minusp s)
-          (princ "-" stream))
-        (if (and (< (length digits) 16)
-                 (<= -2 exp 8))
-            (if (plusp exp)
-                (format stream "~{~D~}.~{~D~}" (subseq digits 0 exp) (subseq digits exp))
-                (format stream "0.~v@{0~}~{~D~}" (abs exp) digits))
-            (format stream "~D.~:[0~;~:*~{~D~}~]E~D" (first digits) (rest digits) (1- exp)))))))
+(defun write-float (float stream)
+  (multiple-value-bind (f e s)
+      (integer-decode-float float)
+    (destructuring-bind (exp &rest digits)
+        (flonum->digits (abs float) f e +min-e+ +precision+ +float-radix+ +output-base+)
+      (when (minusp s)
+        (princ "-" stream))
+      (if (and (< (length digits) 16)
+               (<= -2 exp 8))
+          (if (plusp exp)
+              (format stream "~{~D~}.~{~D~}" (subseq digits 0 exp) (subseq digits exp))
+              (format stream "0.~v@{0~}~{~D~}" (abs exp) digits))
+          (format stream "~D.~:[0~;~:*~{~D~}~]E~D" (first digits) (rest digits) (1- exp))))))

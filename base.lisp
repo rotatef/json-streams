@@ -16,6 +16,14 @@
   (push 'utf-16-strings *features*))
 
 
+(defconstant +most-positive-json-integer+
+  (expt 2 53))
+
+
+(defconstant +most-negative-json-integer+
+  (- (expt 2 53)))
+
+
 (defvar *json-stream*)
 
 
