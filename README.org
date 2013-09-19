@@ -3,6 +3,8 @@
 json-streams is a Common Lisp library for reading and writing JSON
 text.
 
+Homepage: https://github.com/copyleft/json-streams
+
 ** Features
 
 - Designed to used as a building block for more high level libraries.
