@@ -1,6 +1,7 @@
 * json-streams
 
-json-streams is a Common Lisp library for reading and writing JSON.
+json-streams is a Common Lisp library for reading and writing JSON
+text.
 
 ** Features
 
@@ -11,19 +12,6 @@ json-streams is a Common Lisp library for reading and writing JSON.
 - Unambiguous mapping of datatypes between lisp and JSON.
 - Streaming design, can proccess JSON text of unlimted size.
 - Proper handling of Unicode.
-
-** Abstract
-
-
-
-There is already many JSON libraries for Common Lisp.  None of these
-libraries can be said to be best, they all have their strengths and
-weaknesses.  Much of the problem lies in the fact that there is a bit
-of disparaty between JSON datatypes and Common Lisp datatypes.  This
-library is therefore designed to used as a building block for more
-high level JSON libraries.  The library takes of boring syntactic
-details and error checking.
-
 
 ** High level interface
 
@@ -36,8 +24,8 @@ The high level interface uses the following datatype mapping:
 | null   | :NULL                                  |
 | string | string                                 |
 | number | integer, float or ratio                |
-| array  | (:array ... )                          |
-| object | (:object (key . value) ... )           |
+| array  | (:ARRAY ... )                          |
+| object | (:OBJECT (key . value) ... )           |
 
 The options are explained under MAKE-JSON-INPUT-STREAM and
 MAKE-JSON-OUTPUT-STREAM.
