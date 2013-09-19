@@ -1,16 +1,23 @@
 * json-streams
 
-A Common Lisp library for reading and writing JSON.
+json-streams is a Common Lisp library for reading and writing JSON.
 
+** Features
+
+- Designed to used as a building block for more high level libraries.
 - No dependencies.
-- Unambiguous mapping of datatypes between lisp and JSON.
 - Easy to use streaming API.
 - Validates input and output.
-- Designed to be a building block for more high level libraries.
+- Unambiguous mapping of datatypes between lisp and JSON.
 - Streaming design, can proccess JSON text of unlimted size.
+- Proper handling of Unicode.
+
+** Abstract
+
+
 
 There is already many JSON libraries for Common Lisp.  None of these
-libraries ca nbe said to be best, they all have their strengths and
+libraries can be said to be best, they all have their strengths and
 weaknesses.  Much of the problem lies in the fact that there is a bit
 of disparaty between JSON datatypes and Common Lisp datatypes.  This
 library is therefore designed to used as a building block for more
@@ -28,53 +35,65 @@ The high level interface uses the following datatype mapping:
 | false  | NIL                                    |
 | null   | :NULL                                  |
 | string | string                                 |
-| number | integer, ratio and float (output only) |
+| number | integer, float or ratio                |
 | array  | (:array ... )                          |
 | object | (:object (key . value) ... )           |
 
+The options are explained under MAKE-JSON-INPUT-STREAM and
+MAKE-JSON-OUTPUT-STREAM.
 
 Function
-JSON-STREAMS:JSON-PARSE source &key max-exponent
+JSON-STREAMS:JSON-PARSE source &rest options
+=> json, position
 
-Parses JSON text from source, either a character stream or a string.
+Parses a single JSON text from source.  The second value is the
+position where parsing stopped.
 
 Function
-JSON-STREAMS:JSON-PARSE-MULTIPLE source &key max-exponent
+JSON-STREAMS:JSON-PARSE-MULTIPLE source &rest options
+=> jsons
 
-Parses zero or more JSON texts from source. Returns a list.
+Parses zero or more JSON texts from source.  Returns a list of JSON
+values.
 
 Function
 JSON-STREAMS:JSON-STRINGIFY value &optional target &rest options
 
-Stringifies value into JSON text. If target is not provided or NIL,
-returns a string with the JSON text. Otherwise target must be a
+Stringifies value into JSON text.  If target is not provided or NIL,
+returns a string with the JSON text.  Otherwise target must be a
 character stream.
+
+Function
+JSON-STREAMS:JSON-STRINGIFY-MULTIPLE values &optional target &rest options
+
+Stringifies multiple json values.
 
 
 ** The streaming interface
 
-The high level interface is built on top the streaming interafce.  See
-parse.lisp and stringify.lisp for example of how to use this
-interface.
+See parse.lisp and stringify.lisp for examples of how to use the
+streaming interface.
 
 Function
 JSON-STREAMS:MAKE-JSON-INPUT-STREAM source &key start end close-stream multiple duplicate-key-check use-ratios max-exponent raw-strings
+=> json-input-stream
 
 - source - A character stream or a string. When source is a string,
   start and end are bounding index designators of string.
-- use-ratios - Default NIL.  When false, numbers that are not integers
-  are returned as double-floats.  Then true, these numbers are
-  returned as ratios.  Please note that numbers such as 2.0 are always
-  returned as the integer 2.
+- use-ratios - Default NIL.  When false, numbers that can not be
+  represented as integers are returned as double-floats.  Then true,
+  these numbers are returned as ratios.
 - max-exponent - Default 325.  The maximum (positive and negative)
-  exponent accepted in numbers.
+  exponent accepted in numbers.  Setting to a high number opens up for a
+  easy to use denial-of-service attack.
 - raw-strings - Default NIL.  When true, strings are returned as
-  lists of numbers, representing unicode code points.  For unicode
-  escape sequences in strings (\uXXXX), no UTF-16 validation or decoding
-  is done.
+  (:STRING numbers*), where numbers represent Unicode code points.
+  For Unicode escape sequences in strings (\uXXXX), no UTF-16
+  validation or decoding is done.
 
 Function
 JSON-STREAMS:MAKE-JSON-OUTPUT-STREAM stream &key close-stream multiple duplicate-key-check indent escape-non-ascii
+=> json-input-stream
 
 - stream - A character stream.
 - indent - Default NIL.  When true, the JSON text is broken into lines
@@ -82,7 +101,7 @@ JSON-STREAMS:MAKE-JSON-OUTPUT-STREAM stream &key close-stream multiple duplicate
 - escape-non-ascii - Default NIL. When true, any character outside the
   ASCII character set will be escaped using the \uXXXX syntax.
 
-Common options:
+*** Common options
 
 - close-stream - Default NIL.  When T, the source stream will be
   closed by JSON-CLOSE.
@@ -95,15 +114,31 @@ Common options:
 
 Function
 JSON-STREAMS:JSON-READ json-input-stream
+=> token
 
 Parses JSON text from the underlying stream and returns the next
 token.
 
 Function
 JSON-STREAMS:JSON-WRITE token json-output-stream
+=> token
 
 Outputs JSON text to underlying stream based on the given token.
 
+Function
+JSON-STREAMS:JSON-CLOSE json-stream
+
+Closes the json-stream.  Applications should always call JSON-CLOSE
+when finished with a JSON stream.  This ensures that all syntax errors
+are detected.
+
+Macro
+JSON-STREAMS:WITH-OPEN-JSON-STREAM (var json-stream) &body
+
+Binds var to json-stream, executes body, and ensures that JSON-CLOSE
+is called on json-stream.
+
+*** Tokens
 
 The possible tokens for input and output are
 
@@ -115,8 +150,7 @@ The possible tokens for input and output are
 - :FALSE
 - :TRUE
 - A number
-- A string
-- A list of integers
+- A string or (:STRING integer*)
 - :EOF
 
 After a :BEGIN-OBJECT is returned, JSON-READ will alternate between
@@ -125,3 +159,22 @@ instead of a key.  Keys are always returned as strings.  Values can be
 anything, except :END-OBJECT, :END-ARRAY and :EOF.  Thus some kind of
 recursive or stack based algorithm is neccearry.
 
+*** Handling of numbers
+
+While JSON standard doesn't define any limits on the size of numbers,
+many progamming languages does.  This library assumes the limits of
+JavaScript.  In JavaScript there is only one number type, a 64-bit
+IEEE 754 double precision float.  This has the following implications:
+
+The syntax doesn't matter: 20, 20.0 or 2e1 are all the same number,
+the integer 20.
+
+The integer range is +/- (expt 10 53).  Numbers outside this range
+can't be represented accurately.  This library will refuse to write an
+integer outside this range.  If you need to output such large numbers,
+convert them to double-float or string.
+
+At input the handling of numbers outside the integer range depends on
+syntax.  If the number contains a decimal point or an exponent it will
+be returned as a double-float.  Otherwise an error will be signalled.
+The option :USE-RATIOS disables this check.

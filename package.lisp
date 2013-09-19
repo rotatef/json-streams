@@ -7,13 +7,18 @@
    #:json-stringify
    #:json-stringify-multiple
 
+   #:json-stream
+   #:json-input-stream
+   #:json-output-stream
+
    #:json-close
    #:with-open-json-stream
+
    #:json-error
    #:json-parse-error
    #:json-write-error
 
-   #:make-json-out-utstream
+   #:make-json-output-stream
    #:json-write
 
    #:make-json-input-stream
