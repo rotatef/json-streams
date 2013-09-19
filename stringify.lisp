@@ -4,7 +4,6 @@
 (defun json-stringify (value &optional target &rest options)
   (if target
       (with-open-json-stream (jstream (apply #'make-json-output-stream target
-                                             :duplicate-key-check nil
                                              options))
         (json-stringify-single value jstream))
       (with-output-to-string (out)
@@ -14,7 +13,6 @@
 (defun json-stringify-multiple (values &optional target &rest options)
   (if target
       (with-open-json-stream (jstream (apply #'make-json-output-stream target
-                                             :duplicate-key-check nil
                                              :multiple t
                                              options))
         (dolist (value values)
