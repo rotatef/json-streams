@@ -144,6 +144,7 @@
                 (ecase* token-type
                   (:begin-object (write-begin-object))
                   (:begin-array (write-begin-array))
+                  ((:true :false :null :string :number) (write-value))
                   (:eof
                    (unless multiple
                      (%json-error "Empty JSON text"))

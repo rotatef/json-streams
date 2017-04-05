@@ -313,6 +313,12 @@
                         (:begin-array
                          (push-state :before-first-array-item)
                          (values token start end))
+                        (:string-delimiter
+                         (parse-string start))
+                        ((:false :null :true)
+                         (values token start end))
+                        (:number
+                         (values token start end))
                         (:eof
                          (unless multiple
                            (%json-error "Empty JSON text"))

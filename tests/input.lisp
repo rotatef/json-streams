@@ -42,8 +42,9 @@
 
 (define (a-json-text)
   (pick-weighted
-    (1 (generate a-json-array))
-    (1 (generate a-json-object))))
+    (5 (generate a-json-array))
+    (5 (generate a-json-object))
+    (1 (generate a-json-value))))
 
 (define (a-json-value)
   (pick-weighted
