@@ -103,6 +103,7 @@
                 (#\y (not errorsp))
                 (#\n errorsp)
                 (#\i t))
+              errorsp
               tokens
               (unless errorsp
                 (with-output-to-string (out)
@@ -140,7 +141,15 @@
 (defun json-test-suite-test-parsing (&optional (dir (asdf:system-relative-pathname :json-streams "tests/JSONTestSuite/test_parsing/")))
   (loop for file in (directory (merge-pathnames "*.json" dir))
         for name = (pathname-name file)
-        when (and (not (find name *json-test-suite-skip-tests* :test #'string=))
-                  (with-simple-restart (contiune "Test ~A" name)
-                    (not (json-test-suite-test-file file))))
-          collect file))
+        do (format t "~%~A ... " name)
+           (finish-output)
+           (if (find name *json-test-suite-skip-tests* :test #'string=)
+               (princ "SKIP")
+               (with-simple-restart (contiune "Test ~A" name)
+                 (multiple-value-bind (ok errorsp)
+                     (json-test-suite-test-file file)
+                   (when errorsp
+                     (princ "(error)"))
+                   (when ok
+                     (princ " PASSED"))
+                   (test ok))))))
