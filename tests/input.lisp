@@ -21,7 +21,8 @@
 (defun run-all-tests ()
   (quickcheck
     (random-test)
-    (run-test-files)))
+    (run-test-files)
+    (json-test-suite-test-parsing)))
 
 (define (a-json-array)
   (cons :array (generate (a-list a-json-value))))
@@ -91,3 +92,55 @@
                   for got in (read-all-tokens in options)
                   do (named (format nil "~A ~S ~D" options (pathname-name file) token-num)
                        (is= expected got)))))))
+
+
+
+(defun json-test-suite-test-file (pathname)
+  (with-open-file* (in pathname)
+    (let* ((tokens (read-all-tokens in '(:duplicate-key-check nil)))
+           (errorsp (not (not (find :error tokens)))))
+      (values (ecase (char (pathname-name pathname) 0)
+                (#\y (not errorsp))
+                (#\n errorsp)
+                (#\i t))
+              tokens
+              (unless errorsp
+                (with-output-to-string (out)
+                  (with-open-json-stream (json (make-json-output-stream out :duplicate-key-check nil))
+                    (dolist (token tokens)
+                      (json-write token json)))))))))
+
+(defparameter *json-test-suite-skip-tests*
+  '("i_string_iso_latin_1"
+    "i_string_not_in_unicode_range"
+    "i_string_overlong_sequence_2_bytes"
+    "i_string_overlong_sequence_6_bytes"
+    "i_string_overlong_sequence_6_bytes_null"
+    "i_string_UTF-16LE_with_BOM"
+    "i_string_UTF-8_invalid_sequence"
+    "i_string_UTF8_surrogate_U+D800"
+    "i_string_invalid_utf-8"
+    "i_string_lone_utf8_continuation_byte"
+    "i_string_truncated-utf-8"
+    "i_string_utf16BE_no_BOM"
+    "i_string_utf16LE_no_BOM"
+    "n_array_a_invalid_utf8"
+    "n_array_invalid_utf8"
+    "n_number_invalid-utf-8-in-bigger-int"
+    "n_number_invalid-utf-8-in-exponent"
+    "n_number_invalid-utf-8-in-int"
+    "n_number_real_with_invalid_utf8_after_e"
+    "n_object_pi_in_key_and_trailing_comma"
+    "n_string_invalid-utf-8-in-escape"
+    "n_string_invalid_utf8_after_escape"
+    "n_structure_incomplete_UTF8_BOM"
+    "n_structure_lone-invalid-utf-8"
+    "n_structure_single_eacute"))
+
+(defun json-test-suite-test-parsing (&optional (dir (asdf:system-relative-pathname :json-streams "tests/JSONTestSuite/test_parsing/")))
+  (loop for file in (directory (merge-pathnames "*.json" dir))
+        for name = (pathname-name file)
+        when (and (not (find name *json-test-suite-skip-tests* :test #'string=))
+                  (with-simple-restart (contiune "Test ~A" name)
+                    (not (json-test-suite-test-file file))))
+          collect file))
