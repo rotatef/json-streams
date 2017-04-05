@@ -1,0 +1,15 @@
+language: lisp
+
+branches:
+  only:
+    - master
+
+env:
+  matrix:
+    - LISP=sbcl
+
+install:
+  - curl -L https://github.com/luismbo/cl-travis/raw/master/install.sh | sh
+
+script:
+  - cl -e "(ql:quickload :json-streams) (ql:quickload :json-streams-tests) (json-streams-tests::run-all-tests)"
