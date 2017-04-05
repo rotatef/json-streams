@@ -18,6 +18,8 @@
 (defsystem #:json-streams
   :name "json-streams"
   :licence "GNU General Public Licence 3.0"
+  :author "Thomas Bakketun <thomas.bakketun@copyleft.no>"
+  :description "A stream based JSON parser/writer, well suited for higher as building block for higher level libraries."
   :depends-on ()
   :serial t
   :components ((:file "package")
