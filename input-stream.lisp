@@ -80,10 +80,11 @@
 
 
 (defun valid-unescaped-char-p (char)
-  (let ((code (char-code char)))
-    (or (<= #x20 code #x21)
-        (<= #x23 code #x5b)
-        (<= #x5d code #x10ffff))))
+  (when char
+    (let ((code (char-code char)))
+      (or (<= #x20 code #x21)
+          (<= #x23 code #x5b)
+          (<= #x5d code #x10ffff)))))
 
 (defun read-string-chars ()
   (coerce (loop for char = (read-next-char)
