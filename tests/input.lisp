@@ -136,7 +136,8 @@
     "n_string_invalid_utf8_after_escape"
     "n_structure_incomplete_UTF8_BOM"
     "n_structure_lone-invalid-utf-8"
-    "n_structure_single_eacute"))
+    "n_structure_single_eacute"
+    "y_string_nonCharacterInUTF-8_U+FFFF"))
 
 (defun json-test-suite-test-parsing (&optional (dir (asdf:system-relative-pathname :json-streams "tests/JSONTestSuite/test_parsing/")))
   (loop for file in (directory (merge-pathnames "*.json" dir))
