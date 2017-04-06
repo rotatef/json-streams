@@ -73,19 +73,23 @@
 (defgeneric %json-close (json-stream))
 
 
-(defun json-close (json-stream)
+(defun json-close (json-stream &key abort)
   (with-slots (stream close-stream)
       json-stream
-    (%json-close json-stream)
+    (unless abort
+      (%json-close json-stream))
     (when close-stream
-      (close stream))))
+      (close stream :abort abort))))
 
 
 (defmacro with-open-json-stream ((var stream) &body body)
-  `(let ((,var ,stream))
-     (unwind-protect
-          (progn ,@body)
-       (json-close ,var))))
+  (let ((errorsp (gensym "ERRORSP")))
+    `(let ((,var ,stream)
+           (,errorsp t))
+       (unwind-protect
+            (progn ,@body
+                   (setf ,errorsp nil))
+         (json-close ,var :abort ,errorsp)))))
 
 (defun begin-object ()
   (with-slots (duplicate-key-check key-check-stack)

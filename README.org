@@ -116,11 +116,13 @@ JSON-STREAMS:JSON-WRITE token json-output-stream
 Outputs JSON text to underlying stream based on the given token.
 
 Function
-JSON-STREAMS:JSON-CLOSE json-stream
+JSON-STREAMS:JSON-CLOSE json-stream &key abort
 
 Closes the json-stream.  Applications should always call JSON-CLOSE
 when finished with a JSON stream.  This ensures that all syntax errors
-are detected.
+are detected.  The value of abort is forwarded to CL:CLOSE of the
+underlying stream (if close-stream was true) and JSON syntax checking
+is suppressed.
 
 Macro
 JSON-STREAMS:WITH-OPEN-JSON-STREAM (var json-stream) &body
