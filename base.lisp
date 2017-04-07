@@ -87,8 +87,8 @@
     `(let ((,var ,stream)
            (,errorsp t))
        (unwind-protect
-            (progn ,@body
-                   (setf ,errorsp nil))
+            (multiple-value-prog1 ,@body
+              (setf ,errorsp nil))
          (json-close ,var :abort ,errorsp)))))
 
 (defun begin-object ()
