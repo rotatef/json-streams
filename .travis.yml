@@ -6,7 +6,6 @@ branches:
 
 env:
   matrix:
-    - LISP=abcl
     - LISP=clisp
     - LISP=ccl
     - LISP=ecl
