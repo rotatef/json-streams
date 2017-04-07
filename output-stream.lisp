@@ -18,14 +18,15 @@
 (in-package #:json-streams)
 
 
-(defun make-json-output-stream (stream &key close-stream multiple indent escape-non-ascii (duplicate-key-check t))
+(defun make-json-output-stream (stream &key close-stream multiple indent escape-non-ascii (duplicate-key-check t) key-encoder)
   (make-instance 'json-output-stream
                  :stream stream
                  :close-stream close-stream
                  :duplicate-key-check duplicate-key-check
                  :multiple multiple
                  :indent indent
-                 :escape-non-ascii escape-non-ascii))
+                 :escape-non-ascii escape-non-ascii
+                 :key-encoder key-encoder))
 
 
 (defun write-indent ()
@@ -190,3 +191,10 @@
 
 (defmethod %json-close ((*json-stream* json-output-stream))
   (json-write :eof *json-stream*))
+
+
+(defun json-encode-key (key json-stream)
+  (with-slots (key-encoder) json-stream
+    (if key-encoder
+        (funcall key-encoder key)
+        key)))

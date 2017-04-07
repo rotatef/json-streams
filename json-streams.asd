@@ -26,6 +26,7 @@
                (:file "write-float")
                (:file "base")
                (:file "output-stream")
-	       (:file "input-stream")
+               (:file "input-stream")
                (:file "parse")
+               (:file "output")
                (:file "stringify")))

@@ -47,4 +47,16 @@
    #:json-string
 
    #:most-positive-json-integer
-   #:most-negative-json-integer))
+   #:most-negative-json-integer
+
+   #:call-with-json-output
+   #:with-json-output
+   #:with-json-array
+   #:with-json-object
+   #:with-json-member
+   #:json-output-member
+   #:json-output-value
+   #:json-output-boolean
+   #:json-output-null
+   #:json-output-alist
+   #:json-output-plist))

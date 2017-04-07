@@ -67,7 +67,8 @@
   ((multiple :initarg :multiple)
    (escape-non-ascii :initarg :escape-non-ascii)
    (indent :initarg :indent)
-   (level :initform 0)))
+   (level :initform 0)
+   (key-encoder :initarg :key-encoder :initform nil)))
 
 
 (defgeneric %json-close (json-stream))

@@ -19,42 +19,30 @@
 
 
 (defun json-stringify (value &optional target &rest options)
-  (if target
-      (with-open-json-stream (jstream (apply #'make-json-output-stream target
-                                             options))
-        (json-stringify-single value jstream))
-      (with-output-to-string (out)
-        (apply #'json-stringify value out options))))
+  (call-with-json-output target options
+                         (lambda ()
+                           (json-stringify-single value))))
 
 
-(defun json-stringify-multiple (values &optional target &rest options)
-  (if target
-      (with-open-json-stream (jstream (apply #'make-json-output-stream target
-                                             :multiple t
-                                             options))
-        (dolist (value values)
-          (json-stringify-single value jstream)))
-      (with-output-to-string (out)
-        (apply #'json-stringify-multiple values out options))))
+(defun json-stringify-multiple (value &optional target &rest options)
+  (call-with-json-output target (list* :multiple t options)
+                         (lambda ()
+                           (map nil #'json-stringify-single value))))
 
 
-(defun json-stringify-single (value jstream)
+(defun json-stringify-single (value)
   (etypecase value
     ((or string real)
-     (json-write value jstream))
-    ((member t)
-     (json-write :true jstream))
-    ((member nil)
-     (json-write :false jstream))
+     (json-output-value value))
+    ((member t nil)
+     (json-output-boolean value))
     ((member :null)
-     (json-write :null jstream))
+     (json-output-null))
     (json-array
-     (json-write :begin-array jstream)
-     (loop for item in (cdr value) do (json-stringify-single item jstream))
-     (json-write :end-array jstream))
+     (with-json-array
+       (map nil #'json-stringify-single (cdr value))))
     (json-object
-     (json-write :begin-object jstream)
-     (loop for (k . v) in (cdr value) do
-           (json-stringify-single k jstream)
-           (json-stringify-single v jstream))
-     (json-write :end-object jstream))))
+     (with-json-object
+       (loop for (key . value) in (cdr value) do
+         (with-json-member key
+           (json-stringify-single value)))))))
