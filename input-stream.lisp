@@ -55,7 +55,7 @@
     (when current-char
       (incf position)
       (when (eql #\Newline current-char)
-	(pushnew position newlines)))
+	(push position newlines)))
     current-char))
 
 

@@ -133,11 +133,12 @@
 (define-condition json-parse-error (json-error)
   ()
   (:report (lambda (c stream)
-             (format stream "JSON parse error at line ~D column ~D: ~A"
-                     (1+ (length (slot-value (json-error-stream c) 'newlines)))
-                     (- (slot-value (json-error-stream c) 'position)
-                        (or (car (slot-value (json-error-stream c) 'newlines)) 0))
-                     (json-error-message c)))))
+             (let ((newlines (remove-duplicates (slot-value (json-error-stream c) 'newlines))))
+               (format stream "JSON parse error at line ~D column ~D: ~A"
+                       (1+ (length newlines))
+                       (- (slot-value (json-error-stream c) 'position)
+                          (or (car newlines) 0))
+                       (json-error-message c))))))
 
 (define-condition json-write-error (json-error)
   ()
