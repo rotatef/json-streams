@@ -28,9 +28,19 @@
                                         raw-strings
                                         (duplicate-key-check t))
   (make-instance 'json-input-stream
-                 :stream (if (stringp source)
-                             (make-string-input-stream source start end)
-                             source)
+                 :stream (cond
+                           ((stringp source)
+                            (make-string-input-stream source start end))
+                           ((and (streamp source)
+                                 (input-stream-p source)
+                                 (subtypep (stream-element-type source)
+                                           'character))
+                            source)
+                           (t
+                            (error 'json-error
+                                   :stream source
+                                   :message (format nil "Source must be a string or a character input stream, got ~S."
+                                                    (type-of source)))))
                  :position start
                  :close-stream close-stream
                  :duplicate-key-check duplicate-key-check

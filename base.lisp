@@ -127,7 +127,11 @@
 
 (define-condition json-error (error)
   ((stream :initform *json-stream* :initarg :stream :reader json-error-stream)
-   (message :initarg :message :reader json-error-message)))
+   (message :initarg :message :reader json-error-message))
+  (:report (lambda (c stream)
+             (format stream "JSON parse error from ~A: ~A"
+                     (json-error-stream c)
+                     (json-error-message c)))))
 
 
 (define-condition json-parse-error (json-error)
